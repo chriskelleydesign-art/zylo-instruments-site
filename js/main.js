@@ -423,7 +423,8 @@
   const links = document.querySelectorAll('.nav-links a, .nav-mobile a');
   links.forEach(link => {
     const href = link.getAttribute('href');
-    if (href === page || (page === '' && href === 'index.html')) {
+    const isHome = page === 'index.html' && (href === '/' || href === 'index.html');
+    if (href === page || isHome) {
       link.classList.add('active');
     }
   });
