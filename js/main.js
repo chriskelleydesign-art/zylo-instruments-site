@@ -25,6 +25,54 @@
   });
 })();
 
+/* ── Touch-friendly desktop dropdowns ─────────────────────── */
+(function () {
+  const dropdowns = document.querySelectorAll('.nav-dropdown');
+  if (!dropdowns.length) return;
+
+  function closeDropdowns(except) {
+    dropdowns.forEach(dropdown => {
+      if (dropdown === except) return;
+      dropdown.classList.remove('open');
+      dropdown.querySelector('.nav-dropdown-toggle')?.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  dropdowns.forEach(dropdown => {
+    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    const menu = dropdown.querySelector('.nav-dropdown-menu');
+    if (!toggle || !menu) return;
+
+    toggle.setAttribute('role', 'button');
+    toggle.setAttribute('tabindex', '0');
+    toggle.setAttribute('aria-haspopup', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+
+    function toggleDropdown(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const willOpen = !dropdown.classList.contains('open');
+      closeDropdowns(dropdown);
+      dropdown.classList.toggle('open', willOpen);
+      toggle.setAttribute('aria-expanded', String(willOpen));
+    }
+
+    toggle.addEventListener('click', toggleDropdown);
+    toggle.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') toggleDropdown(event);
+      if (event.key === 'Escape') {
+        dropdown.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    menu.addEventListener('click', () => closeDropdowns());
+  });
+
+  document.addEventListener('click', () => closeDropdowns());
+  window.addEventListener('resize', () => closeDropdowns());
+})();
+
 /* ── Product filter tabs (products page) ───────────────────── */
 (function () {
   const filterLinks = document.querySelectorAll('.filter-links a[data-filter]');
