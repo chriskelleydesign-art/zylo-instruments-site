@@ -453,14 +453,40 @@
 (function () {
   const form = document.querySelector('.contact-form-el');
   if (!form) return;
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
-    if (btn) {
+    const status = form.querySelector('.contact-form-status');
+    if (!btn || !status || !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    btn.style.background = '';
+    btn.style.color = '';
+    status.textContent = '';
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Formspree submission failed');
+
+      form.reset();
       btn.textContent = 'Message Sent';
       btn.style.background = '#c8ff00';
       btn.style.color = '#000';
-      btn.disabled = true;
+      status.textContent = 'Message Sent';
+    } catch (_) {
+      btn.textContent = 'Send Message';
+      status.innerHTML = 'Something went wrong. Please email <a href="mailto:hello@zyloinstruments.com">hello@zyloinstruments.com</a>.';
+    } finally {
+      btn.disabled = false;
     }
   });
 })();

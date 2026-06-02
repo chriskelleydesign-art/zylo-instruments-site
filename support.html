@@ -172,20 +172,20 @@
         <p>Send us a message and we'll get back to you within one business day.</p>
         <p>For general questions, email <a href="mailto:hello@zyloinstruments.com">hello@zyloinstruments.com</a>.</p>
       </div>
-      <form class="contact-form-el" aria-label="Contact form" novalidate>
+      <form class="contact-form-el" action="https://formspree.io/f/xeedyvjb" method="POST" aria-label="Contact form">
         <div class="contact-row">
           <div class="form-group">
             <label for="cf-name">Name</label>
-            <input type="text" id="cf-name" placeholder="Your name" autocomplete="name" required />
+            <input type="text" id="cf-name" name="name" placeholder="Your name" autocomplete="name" required />
           </div>
           <div class="form-group">
             <label for="cf-email">Email</label>
-            <input type="email" id="cf-email" placeholder="Email address" autocomplete="email" required />
+            <input type="email" id="cf-email" name="email" placeholder="Email address" autocomplete="email" required />
           </div>
         </div>
         <div class="form-group">
           <label for="cf-subject">Subject</label>
-          <select id="cf-subject">
+          <select id="cf-subject" name="subject" required>
             <option value="">Select a topic…</option>
             <option>Installation issue</option>
             <option>Activation / license</option>
@@ -196,9 +196,10 @@
         </div>
         <div class="form-group">
           <label for="cf-message">Message</label>
-          <textarea id="cf-message" rows="5" placeholder="Describe your issue or question…" required></textarea>
+          <textarea id="cf-message" name="message" rows="5" placeholder="Describe your issue or question…" required></textarea>
         </div>
         <button type="submit" class="btn btn-outline">Send Message</button>
+        <p class="contact-form-status" role="status" aria-live="polite"></p>
       </form>
     </div>
   </div>

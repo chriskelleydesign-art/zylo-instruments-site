@@ -2211,6 +2211,17 @@ h3 { font-size: 1.25rem; }
   gap: 20px;
 }
 
+.contact-form-status {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.contact-form-status a {
+  color: var(--text);
+}
+
 .contact-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
