@@ -29,6 +29,7 @@
 (function () {
   const dropdowns = document.querySelectorAll('.nav-dropdown');
   if (!dropdowns.length) return;
+  const hasFinePointerHover = window.matchMedia('(hover: hover) and (pointer: fine)');
 
   function closeDropdowns(except) {
     dropdowns.forEach(dropdown => {
@@ -57,7 +58,10 @@
       toggle.setAttribute('aria-expanded', String(willOpen));
     }
 
-    toggle.addEventListener('click', toggleDropdown);
+    toggle.addEventListener('click', event => {
+      if (hasFinePointerHover.matches) return;
+      toggleDropdown(event);
+    });
     toggle.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') toggleDropdown(event);
       if (event.key === 'Escape') {
