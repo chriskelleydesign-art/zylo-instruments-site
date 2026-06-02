@@ -426,25 +426,39 @@
 (function () {
   const forms = document.querySelectorAll('.newsletter-form');
   forms.forEach(form => {
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const input = form.querySelector('input[type="email"]');
-      const btn = form.querySelector('button');
-      if (!input || !btn) return;
-
-      if (!input.value || !input.value.includes('@')) {
-        input.style.borderColor = 'rgba(255,80,80,0.5)';
+      const btn = form.querySelector('button[type="submit"]');
+      const status = form.querySelector('.newsletter-form-status');
+      if (!input || !btn || !status || !form.checkValidity()) {
+        form.reportValidity();
         return;
       }
-      input.style.borderColor = '';
-      btn.textContent = 'Subscribed';
-      btn.style.background = '#c8ff00';
-      btn.style.color = '#000';
-      btn.style.borderColor = '#c8ff00';
-      input.value = '';
-      input.placeholder = 'Thanks for signing up!';
-      input.disabled = true;
+
+      const defaultLabel = btn.textContent;
       btn.disabled = true;
+      btn.textContent = 'Sending...';
+      input.style.borderColor = '';
+      status.textContent = '';
+
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Formspree submission failed');
+
+        form.reset();
+        status.textContent = "You're on the list.";
+      } catch (_) {
+        status.textContent = 'Something went wrong. Please email hello@zyloinstruments.com.';
+      } finally {
+        btn.textContent = defaultLabel;
+        btn.disabled = false;
+      }
     });
   });
 })();

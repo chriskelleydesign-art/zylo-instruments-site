@@ -667,6 +667,7 @@ h3 { font-size: 1.25rem; }
 
 .newsletter-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   max-width: 420px;
   margin: 0 auto;
@@ -691,6 +692,14 @@ h3 { font-size: 1.25rem; }
 .newsletter-form button {
   border-radius: 0 2px 2px 0;
   border: 1px solid rgba(255,255,255,0.75);
+}
+
+.newsletter .newsletter-form-status {
+  flex-basis: 100%;
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 /* ── Footer ───────────────────────────────────────────────── */
@@ -756,6 +765,17 @@ h3 { font-size: 1.25rem; }
 .footer-bottom p {
   font-size: 0.75rem;
   color: var(--very-muted);
+}
+
+.footer-email {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--very-muted);
+  transition: color 0.18s ease;
+}
+
+.footer-email:hover {
+  color: var(--text);
 }
 
 .footer-social {
