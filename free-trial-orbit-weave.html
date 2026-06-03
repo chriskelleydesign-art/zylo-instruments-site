@@ -75,12 +75,15 @@
             <div class="sysreq-val">No Account Required</div>
           </div>
         </div>
-        <form class="contact-form-el trial-form-el" data-success-message="Check your email for the trial download link." action="https://formspree.io/f/xnjyqqqd" method="POST" aria-label="Orbit Weave trial form">
-          <input type="hidden" name="product" value="orbit-weave" />
-          <input type="hidden" name="source" value="free-trial-orbit-weave" />
+        <!-- TODO: Insert Orbit Weave MailerLite form action URL in the action attribute below. -->
+        <form class="contact-form-el trial-form-el" data-success-message="Thanks. Check your email for the trial download link." action="" method="POST" aria-label="Orbit Weave trial form">
+          <input type="hidden" name="fields[product]" value="orbit-weave" />
+          <input type="hidden" name="fields[source]" value="free-trial-orbit-weave" />
+          <input type="hidden" name="ml-submit" value="1" />
+          <input type="hidden" name="anticsrf" value="true" />
           <div class="form-group">
             <label for="trial-email">Email</label>
-            <input type="email" id="trial-email" name="email" placeholder="Email address" autocomplete="email" required />
+            <input type="email" id="trial-email" name="fields[email]" placeholder="Email address" autocomplete="email" required />
           </div>
           <button type="submit" class="btn btn-outline">Send Download Link</button>
           <p class="contact-form-status trial-form-status" role="status" aria-live="polite"></p>
@@ -140,6 +143,13 @@
   </div>
 </footer>
 
+<script>
+(function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[])
+.push(arguments);},l=d.createElement(e),l.async=1,l.src=u,
+n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})
+(window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
+ml('account', '2403966');
+</script>
 <script src="js/main.js"></script>
 </body>
 </html>

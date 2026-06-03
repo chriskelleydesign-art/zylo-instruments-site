@@ -486,16 +486,17 @@
     status.textContent = '';
 
     try {
-      const response = await fetch(form.action, {
+      const action = form.getAttribute('action');
+      if (!action) throw new Error('MailerLite action missing');
+
+      await fetch(form.action, {
         method: 'POST',
         body: new FormData(form),
-        headers: { Accept: 'application/json' }
+        mode: 'no-cors'
       });
 
-      if (!response.ok) throw new Error('Formspree submission failed');
-
       form.reset();
-      status.textContent = form.dataset.successMessage || 'Check your inbox — the Medrone trial link is on its way.';
+      status.textContent = form.dataset.successMessage || 'Thanks. Check your email for the trial download link.';
     } catch (_) {
       status.innerHTML = 'Something went wrong. Email <a href="mailto:support@zyloinstruments.com">support@zyloinstruments.com</a> and we&rsquo;ll help you.';
     } finally {
