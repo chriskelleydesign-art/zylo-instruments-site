@@ -766,8 +766,12 @@ h3 { font-size: 1.25rem; }
 }
 
 .footer-email {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
   margin-left: auto;
   font-size: 0.75rem;
+  line-height: 1;
   color: var(--very-muted);
   transition: color 0.18s ease;
 }
@@ -778,7 +782,13 @@ h3 { font-size: 1.25rem; }
 
 .footer-social {
   display: flex;
+  align-items: center;
   gap: 16px;
+}
+
+.footer-email + .footer-social {
+  border-left: 1px solid var(--border);
+  padding-left: 18px;
 }
 .footer-social a {
   color: var(--very-muted);
