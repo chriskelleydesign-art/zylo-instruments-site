@@ -119,9 +119,11 @@
   <div class="container">
     <h2 id="newsletter-heading">Be the first to know.</h2>
     <p>New plugins, exclusive offers, and ambient dispatches &mdash; straight to your inbox.</p>
-    <form class="newsletter-form" action="https://formspree.io/f/xkoedkog" method="POST" aria-label="Email sign-up">
-      <input type="email" name="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required />
-      <input type="hidden" name="source" value="Zylo newsletter signup" />
+    <form class="newsletter-form" action="https://assets.mailerlite.com/jsonp/2403966/forms/189290985762588144/subscribe" method="POST" aria-label="Email sign-up">
+      <input type="email" name="fields[email]" placeholder="Email address" aria-label="Email address" autocomplete="email" required />
+      <input type="hidden" name="fields[source]" value="Zylo newsletter signup" />
+      <input type="hidden" name="ml-submit" value="1" />
+      <input type="hidden" name="anticsrf" value="true" />
       <button type="submit" class="btn btn-outline">Sign Up</button>
       <p class="newsletter-form-status" role="status" aria-live="polite"></p>
     </form>

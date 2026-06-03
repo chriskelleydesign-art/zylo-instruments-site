@@ -447,16 +447,23 @@
       status.textContent = '';
 
       try {
-        const response = await fetch(form.action, {
-          method: 'POST',
-          body: new FormData(form),
-          headers: { Accept: 'application/json' }
-        });
+        const isMailerLite = form.action.includes('assets.mailerlite.com');
+        const response = await fetch(form.action, isMailerLite
+          ? {
+              method: 'POST',
+              body: new FormData(form),
+              mode: 'no-cors'
+            }
+          : {
+              method: 'POST',
+              body: new FormData(form),
+              headers: { Accept: 'application/json' }
+            });
 
-        if (!response.ok) throw new Error('Formspree submission failed');
+        if (!isMailerLite && !response.ok) throw new Error('Newsletter submission failed');
 
         form.reset();
-        status.textContent = "You're on the list.";
+        status.textContent = isMailerLite ? 'Thanks. You’re on the list.' : "You're on the list.";
       } catch (_) {
         status.textContent = 'Something went wrong. Please email hello@zyloinstruments.com.';
       } finally {
