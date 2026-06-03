@@ -75,9 +75,18 @@
             <div class="sysreq-val">No Account Required</div>
           </div>
         </div>
-        <div class="contact-form-el trial-form-el" aria-label="ZyloDelay trial form">
-          <div class="ml-embedded" data-form="O3UbNB"></div>
-        </div>
+        <form class="contact-form-el trial-form-el" data-success-message="Thanks. Check your email for the trial download link." action="https://assets.mailerlite.com/jsonp/2403966/forms/189280267255416633/subscribe" method="POST" aria-label="ZyloDelay trial form">
+          <input type="hidden" name="fields[product]" value="zylodelay" />
+          <input type="hidden" name="fields[source]" value="free-trial-zylodelay" />
+          <input type="hidden" name="ml-submit" value="1" />
+          <input type="hidden" name="anticsrf" value="true" />
+          <div class="form-group">
+            <label for="trial-email">Email</label>
+            <input type="email" id="trial-email" name="fields[email]" placeholder="Email address" autocomplete="email" required />
+          </div>
+          <button type="submit" class="btn btn-outline">Send Download Link</button>
+          <p class="contact-form-status trial-form-status" role="status" aria-live="polite"></p>
+        </form>
       </div>
     </div>
   </section>
