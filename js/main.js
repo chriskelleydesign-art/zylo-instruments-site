@@ -495,7 +495,7 @@
       if (!response.ok) throw new Error('Formspree submission failed');
 
       form.reset();
-      status.textContent = 'Check your inbox — the Medrone trial link is on its way.';
+      status.textContent = form.dataset.successMessage || 'Check your inbox — the Medrone trial link is on its way.';
     } catch (_) {
       status.innerHTML = 'Something went wrong. Email <a href="mailto:support@zyloinstruments.com">support@zyloinstruments.com</a> and we&rsquo;ll help you.';
     } finally {
