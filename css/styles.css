@@ -811,24 +811,6 @@ h3 { font-size: 1.25rem; }
 .page-hero .hero-content .label { margin-bottom: 14px; }
 .page-hero .hero-content h1 { font-size: clamp(2.4rem, 5vw, 4rem); }
 
-.trial-download-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 16px;
-  margin-top: 14px;
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.trial-download-meta span::before {
-  content: '\00b7';
-  margin-right: 16px;
-  color: var(--very-muted);
-}
-
 /* ── Products Page ────────────────────────────────────────── */
 .products-layout {
   display: grid;
