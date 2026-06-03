@@ -467,6 +467,44 @@
   });
 })();
 
+/* ── Trial form ───────────────────────────────────────────── */
+(function () {
+  const form = document.querySelector('.trial-form-el');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const status = form.querySelector('.trial-form-status');
+    if (!btn || !status || !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const defaultLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    status.textContent = '';
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Formspree submission failed');
+
+      form.reset();
+      status.textContent = 'Check your inbox — the Medrone trial link is on its way.';
+    } catch (_) {
+      status.innerHTML = 'Something went wrong. Email <a href="mailto:support@zyloinstruments.com">support@zyloinstruments.com</a> and we&rsquo;ll help you.';
+    } finally {
+      btn.textContent = defaultLabel;
+      btn.disabled = false;
+    }
+  });
+})();
+
 /* ── Contact form ──────────────────────────────────────────── */
 (function () {
   const form = document.querySelector('.contact-form-el');
