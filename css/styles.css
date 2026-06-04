@@ -1839,6 +1839,9 @@ h3 { font-size: 1.25rem; }
 .merch-card {
   background: var(--bg-card);
   border: 1px solid var(--border-sub);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .merch-card-img {
@@ -2294,6 +2297,7 @@ h3 { font-size: 1.25rem; }
   padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 4px;
 }
 
@@ -2301,19 +2305,29 @@ h3 { font-size: 1.25rem; }
   font-family: 'Syne', sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.25;
+  min-height: 2.4em;
   color: var(--text);
 }
 
 .merch-card-sub {
   font-size: 0.78rem;
+  line-height: 1.55;
+  min-height: 3.75em;
   color: var(--very-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .merch-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 14px;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
 }
 
 .merch-card-price {
