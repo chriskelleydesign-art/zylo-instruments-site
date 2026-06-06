@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ZYLO — Brand Guide 3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink-black:  #060606;
+  --ink-900:    #0a0a0a;
+  --ink-850:    #0e0e0e;
+  --ink-800:    #141414;
+  --ink-700:    #1a1a1a;
+  --ink-600:    #242424;
+  --ink-500:    #2e2e2e;
+  --ink-400:    #555555;
+  --ink-300:    #888888;
+  --ink-200:    #aaaaaa;
+  --ink-100:    #e8e8e8;
+  --ink-white:  #f0f0f0;
+  --paper:      #f5f5f5;
+  --bg:         var(--ink-850);
+  --bg-nav:     var(--ink-900);
+  --bg-card:    var(--ink-800);
+  --fg:         var(--ink-white);
+  --fg-muted:   var(--ink-300);
+  --fg-faint:   var(--ink-400);
+  --accent:     #ffffff;
+  --border:     rgba(255,255,255,0.08);
+  --border-sub: rgba(255,255,255,0.06);
+  --sig-play:    #2ECC8A;
+  --sig-rec:     #E8384D;
+  --sig-arm:     #F0C040;
+  --sig-monitor: #4AADE8;
+  --sig-amber:   #FFBE78;
+  --sig-stopped: #3B3D4A;
+  --medrone:    #42d2a5;
+  --orbit:      #d8cbb4;
+  --zylodelay:  #f3ad30;
+  --zyloverb:   #55bfff;
+  --r-sharp:  2px;
+  --r-card:   6px;
+  --r-panel:  16px;
+  --r-shell:  28px;
+  --r-pill:   999px;
+  --sidebar-w: 220px;
+  --font:         'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Syne', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'SF Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(74,173,232,0.10), transparent 28%),
+    radial-gradient(circle at 84% 10%, rgba(232,56,77,0.08), transparent 24%),
+    linear-gradient(180deg, #09090b 0%, #0d0d10 50%, #09090b 100%);
+  color: var(--fg);
+  font-family: var(--font);
+  min-height: 100vh;
+}
+
+/* ── Fixed grid overlay ── */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 120px 120px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65), transparent 80%);
+  pointer-events: none;
+}
+
+/* ── Ambient blobs ── */
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle at 14% 11%, rgba(74,173,232,0.12), transparent 16%),
+    radial-gradient(circle at 88% 15%, rgba(240,192,64,0.09), transparent 14%),
+    radial-gradient(circle at 66% 80%, rgba(232,56,77,0.09), transparent 18%);
+  filter: blur(20px); opacity: 0.88;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════ */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: rgba(9,9,11,0.92);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 32px;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 20px;
+}
+.sidebar-logo svg { width: 96px; height: auto; color: var(--fg); display: block; }
+.sidebar-version {
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: rgba(255,255,255,0.28);
+  margin-top: 10px;
+}
+
+.nav-group { margin-bottom: 4px; }
+.nav-group-label {
+  font-family: var(--font-mono);
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.26);
+  padding: 10px 24px 6px;
+  display: block;
+}
+.nav-link {
+  display: block;
+  padding: 7px 24px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.44);
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  position: relative;
+  cursor: pointer;
+}
+.nav-link:hover { color: rgba(255,255,255,0.80); background: rgba(255,255,255,0.04); }
+.nav-link.active { color: var(--fg); }
+.nav-link.active::before {
+  content: "";
+  position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 2px; background: var(--fg);
+  border-radius: 0 1px 1px 0;
+}
+
+/* ══════════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Each page section ── */
+.page-section {
+  min-height: 100vh;
+  padding: 64px 64px 80px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+}
+.page-section:last-child { border-bottom: none; }
+
+/* Section header */
+.section-head {
+  display: flex; align-items: baseline; gap: 16px;
+  margin-bottom: 40px; padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.section-num {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.22);
+}
+.section-title {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.60);
+}
+
+/* Content card (matches old brand guide section) */
+.card {
+  padding: 40px;
+  background: linear-gradient(180deg, rgba(17,17,20,0.90), rgba(11,11,14,0.90));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--r-shell);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.26);
+  backdrop-filter: blur(12px);
+  position: relative; overflow: hidden;
+  margin-bottom: 20px;
+}
+.card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(74,173,232,0.06), transparent 28%, transparent 72%, rgba(232,56,77,0.05));
+  pointer-events: none;
+}
+.card > * { position: relative; }
+.card-title {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.20em; text-transform: uppercase;
+  color: rgba(255,255,255,0.44); margin-bottom: 24px;
+  padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.card-sub {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-200); margin: 28px 0 14px;
+}
+p { font-size: 14px; line-height: 1.8; color: #b3b5bc; max-width: 72ch; }
+code {
+  font-family: var(--font-mono); font-size: 11px; color: var(--sig-monitor);
+  background: rgba(74,173,232,0.08); padding: 1px 5px; border-radius: var(--r-sharp);
+}
+
+/* ── Cover section ── */
+.cover-card {
+  background:
+    radial-gradient(circle at top left, rgba(74,173,232,0.15), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(232,56,77,0.14), transparent 32%),
+    linear-gradient(135deg, rgba(8,8,10,0.98), rgba(16,16,22,0.96));
+  padding: 72px 56px 60px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 34px;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.34);
+  position: relative; overflow: hidden;
+}
+.cover-card::before {
+  content: ""; position: absolute;
+  width: 440px; height: 440px; top: -200px; right: -80px;
+  background: radial-gradient(circle, rgba(74,173,232,0.16), transparent 62%);
+  border-radius: 999px; pointer-events: none;
+}
+.cover-card::after {
+  content: ""; position: absolute;
+  width: 340px; height: 340px; bottom: -130px; left: -110px;
+  background: radial-gradient(circle, rgba(232,56,77,0.13), transparent 65%);
+  border-radius: 999px; pointer-events: none;
+}
+.cover-inner { position: relative; display: flex; flex-direction: column; gap: 20px; }
+.cover-eyebrow { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.36); }
+.cover-wordmark { width: min(100%, 460px); height: auto; color: #ffffff; filter: drop-shadow(0 12px 30px rgba(0,0,0,0.26)); display: block; }
+.cover-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.28); }
+.cover-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.cover-chip { padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.46); }
+
+/* ── Logo panels ── */
+.logo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+.logo-panel { border-radius: 20px; padding: 44px 40px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); position: relative; }
+.logo-panel.dark  { background: #060606; }
+.logo-panel.mid   { background: var(--ink-800); }
+.logo-panel.light { background: var(--ink-white); }
+.logo-panel.paper { background: var(--paper); }
+.logo-panel svg   { width: 240px; height: auto; }
+.panel-note { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; }
+.logo-panel.dark .panel-note, .logo-panel.mid .panel-note { color: rgba(255,255,255,0.24); }
+.logo-panel.light .panel-note, .logo-panel.paper .panel-note { color: rgba(0,0,0,0.34); }
+.badge { position: absolute; top: 14px; right: 14px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 9px; border-radius: var(--r-sharp); }
+.badge-do   { background: rgba(46,204,138,0.13); color: #42d2a5; border: 1px solid rgba(46,204,138,0.24); }
+.badge-dont { background: rgba(232,56,77,0.13);  color: #e8384d; border: 1px solid rgba(232,56,77,0.24); }
+
+/* ── Z mark ── */
+.z-mark-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; align-items: flex-end; }
+.z-mark-cell { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 18px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r-panel); }
+.z-mark-cell img { display: block; }
+.z-lbl { font-family: var(--font-mono); font-size: 9px; color: var(--fg-muted); letter-spacing: 0.06em; text-transform: uppercase; text-align: center; }
+.z-lbl b { color: var(--fg); display: block; font-weight: 500; margin-bottom: 2px; }
+.z-div { width: 1px; align-self: stretch; background: var(--border); margin: 0 4px; }
+
+/* ── Swatches ── */
+.swatches { display: grid; gap: 9px; margin-top: 20px; }
+.sw-12 { grid-template-columns: repeat(6,1fr); }
+.sw-6  { grid-template-columns: repeat(6,1fr); }
+.sw-4  { grid-template-columns: repeat(4,1fr); }
+.swatch { aspect-ratio: 1.05; border-radius: 14px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+.sw-lbl { position: absolute; bottom: 10px; left: 11px; right: 11px; }
+.sw-name { font-family: var(--font-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; display: block; }
+.sw-hex  { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.04em; opacity: 0.56; display: block; margin-top: 2px; }
+.sw-role { font-family: var(--font-mono); font-size: 7.5px; opacity: 0.42; display: block; margin-top: 1px; }
+.on-dark  { color: rgba(255,255,255,0.84); }
+.on-light { color: rgba(0,0,0,0.70); }
+.sw-group { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); margin-top: 24px; margin-bottom: 8px; }
+
+.accent-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 16px; }
+.accent-cell { border-radius: var(--r-panel); padding: 18px 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 8px; }
+.ac-swatch { height: 30px; border-radius: 7px; }
+.ac-name { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--fg); }
+.ac-meta { font-family: var(--font-mono); font-size: 9px; color: var(--fg-faint); letter-spacing: 0.06em; }
+.ac-note { font-size: 11px; color: var(--fg-faint); line-height: 1.5; }
+
+/* ── Type table ── */
+.type-table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+.type-table td { padding: 16px 0; vertical-align: bottom; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.type-table td:first-child { width: 44%; overflow: hidden; }
+.type-table td:nth-child(2) { width: 18%; white-space: nowrap; }
+.type-table td:last-child { width: 38%; text-align: right; color: var(--fg-faint); font-size: 10px; font-family: var(--font-mono); letter-spacing: 0.04em; }
+
+/* ── Spacing ── */
+.sp-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 18px; }
+.sp-item { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.sp-bar { background: var(--sig-monitor); opacity: 0.82; border-radius: 2px; width: 26px; }
+.sp-n { font-family: var(--font-mono); font-size: 9px; color: var(--fg); }
+.sp-v { font-family: var(--font-mono); font-size: 8px; color: var(--fg-faint); }
+
+.radius-row { display: flex; gap: 16px; align-items: flex-end; margin-top: 18px; flex-wrap: wrap; }
+.r-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.r-box { width: 72px; height: 52px; background: var(--ink-700); border: 1px solid var(--border); }
+.r-lbl { font-family: var(--font-mono); font-size: 8.5px; color: var(--fg-muted); letter-spacing: 0.04em; text-align: center; }
+.r-lbl b { color: var(--fg); display: block; font-weight: 500; text-transform: uppercase; margin-bottom: 2px; }
+
+.shadow-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-top: 18px; }
+.sh-item { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.sh-box { width: 88px; height: 54px; background: var(--ink-800); border: 1px solid var(--border); border-radius: var(--r-card); }
+
+/* ── Components ── */
+.comp-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
+.btn { font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; border: none; cursor: default; border-radius: var(--r-sharp); padding: 11px 24px; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: #fff; color: #000; }
+.btn-outline  { background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,0.70); }
+.btn-ghost    { background: transparent; color: var(--fg-muted); border: 1px solid rgba(255,255,255,0.10); }
+.btn-sm       { font-size: 9px; padding: 8px 18px; }
+.btn-text     { font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(255,255,255,0.70); display: inline-flex; align-items: center; gap: 6px; }
+
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: var(--r-pill); font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); color: var(--fg); }
+.chip-play    { background: rgba(46,204,138,0.13);  border-color: rgba(46,204,138,0.28);  color: var(--sig-play); }
+.chip-rec     { background: rgba(232,56,77,0.13);   border-color: rgba(232,56,77,0.28);   color: var(--sig-rec); }
+.chip-arm     { background: rgba(240,192,64,0.13);  border-color: rgba(240,192,64,0.28);  color: var(--sig-arm); }
+.chip-monitor { background: rgba(74,173,232,0.13);  border-color: rgba(74,173,232,0.28);  color: var(--sig-monitor); }
+
+.nav-specimen { background: var(--ink-900); border: 1px solid var(--border); height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-radius: var(--r-card); margin-top: 20px; }
+.nav-spec-links { display: flex; gap: 28px; }
+.nav-spec-links span { font-family: var(--font-display); font-size: 10px; font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg); }
+
+.product-card { width: 200px; background: var(--bg-card); border: 1px solid var(--border-sub); overflow: hidden; }
+.product-card .img { aspect-ratio: 16/9; background: var(--ink-700); background-size: cover; background-position: center; }
+.product-card .body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 4px; }
+.product-card .lbl  { font-family: var(--font-display); font-weight: 600; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-muted); }
+.product-card .name { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--fg); }
+.product-card .tag  { font-size: 0.78rem; color: var(--fg-muted); }
+.product-card .price{ font-family: var(--font-display); font-weight: 600; font-size: 0.86rem; color: var(--fg); margin-top: 2px; }
+.product-card .link { font-family: var(--font-display); font-weight: 600; font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg-muted); margin-top: 6px; }
+
+/* ── Products grid ── */
+.products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 20px; }
+.product-cell { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); padding: 26px; display: flex; flex-direction: column; gap: 7px; }
+.prod-type    { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+.prod-name    { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; }
+.prod-tagline { font-size: 14px; color: var(--fg-muted); font-style: italic; line-height: 1.5; }
+.prod-note    { font-family: var(--font-mono); font-size: 9px; color: var(--fg-faint); letter-spacing: 0.06em; margin-top: 3px; }
+
+/* ── Voice ── */
+.voice-rows { display: flex; flex-direction: column; margin-top: 20px; }
+.voice-row { display: grid; grid-template-columns: 60px 1fr; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.voice-row:last-child { border-bottom: none; }
+.vtag { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 14px 0; }
+.vtag.do  { color: rgba(46,204,138,0.8); }
+.vtag.not { color: rgba(232,56,77,0.7); }
+.vcopy { font-size: 14px; line-height: 1.65; padding: 14px 0; }
+.vcopy.do   { color: rgba(255,255,255,0.84); }
+.vcopy.dont { color: var(--fg-faint); text-decoration: line-through; text-decoration-color: rgba(232,56,77,0.3); }
+
+/* ── Principles ── */
+.principles { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-top: 20px; }
+.principle { padding: 24px 20px; background: linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01)); border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); }
+.principle-name { font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg); margin-bottom: 10px; }
+.principle p { font-size: 12px; line-height: 1.65; color: var(--fg-muted); }
+
+/* ── Templates ── */
+.tpl-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 20px; }
+.tpl-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--r-panel); overflow: hidden; }
+.tpl-head { background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+.tpl-lbl  { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); }
+.tpl-ratio{ font-family: var(--font-mono); font-size: 9px; color: var(--ink-500); background: rgba(255,255,255,0.04); border: 1px solid var(--border); padding: 2px 7px; border-radius: var(--r-sharp); }
+
+.tpl-a { padding: 20px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+.tpl-a-eye  { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-faint); }
+.tpl-a-mid  { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+.tpl-a-name { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; }
+.tpl-a-tag  { font-size: 12px; color: var(--fg-muted); }
+.tpl-a-foot { display: flex; justify-content: space-between; align-items: flex-end; }
+
+.tpl-b { min-height: 220px; display: flex; align-items: flex-end; padding: 20px; background: linear-gradient(158deg,#0c0c0c,#111110); position: relative; overflow: hidden; }
+.tpl-b-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.055; pointer-events: none; }
+
+.tpl-c { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; padding: 20px; text-align: center; }
+.tpl-c-eye { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: var(--fg-faint); }
+.tpl-c-hl  { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--fg); letter-spacing: -0.01em; line-height: 1.15; }
+
+/* Platform table */
+.ptable { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.ptable th { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.ptable td { padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: var(--fg-muted); vertical-align: top; }
+.ptable td:first-child { font-family: var(--font-display); font-weight: 700; color: var(--fg); font-size: 13px; }
+.ptable tr:last-child td { border-bottom: none; }
+
+/* Image direction strips */
+.theme-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-top: 20px; }
+.theme-card { border-radius: var(--r-panel); overflow: hidden; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.06); }
+.theme-bar { height: 3px; width: 100%; }
+.theme-meta { padding: 10px 12px 8px; display: flex; align-items: center; gap: 8px; }
+.theme-icon { width: 18px; flex-shrink: 0; }
+.theme-icon svg { width: 100%; display: block; }
+.theme-name { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: -0.01em; }
+.theme-images { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.theme-images img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+.theme-images.three { grid-template-columns: 1fr 1fr; }
+.theme-images.three img:first-child { grid-column: span 2; aspect-ratio: 2/1; }
+.theme-kws { padding: 8px 12px 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+.theme-kw { font-family: var(--font-mono); font-size: 7.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint); padding: 2px 6px; border: 1px solid rgba(255,255,255,0.07); border-radius: 2px; }
+
+/* General images */
+.gen-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; margin-top: 20px; border-radius: var(--r-panel); overflow: hidden; }
+.gen-grid img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; }
+
+/* Post mockups */
+.mock-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-top: 20px; }
+.post-mock { position: relative; aspect-ratio: 1/1; border-radius: 4px; overflow: hidden; }
+.post-mock img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.post-mock .pm-overlay { position: absolute; inset: 0; }
+.post-mock .pm-content { position: absolute; inset: 0; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+.post-mock .pm-top { display: flex; justify-content: flex-start; }
+.post-mock .pm-wm { width: 36px; opacity: 0.7; }
+.post-mock .pm-wm svg { width: 100%; fill: white; display: block; }
+.post-mock .pm-bottom { display: flex; flex-direction: column; gap: 3px; }
+.post-mock .pm-icon svg { display: block; }
+.post-mock .pm-label { font-family: var(--font-mono); font-size: 6px; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
+.post-mock .pm-hl { font-family: var(--font-display); font-weight: 700; font-size: 11px; color: white; line-height: 1.2; letter-spacing: -0.01em; }
+
+/* Image usage rules */
+.img-rules { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.img-rule-col { display: flex; flex-direction: column; gap: 8px; }
+.img-rule { font-size: 12px; color: var(--fg-muted); line-height: 1.6; padding: 10px 14px; border-left: 2px solid; border-radius: 0 var(--r-sharp) var(--r-sharp) 0; background: rgba(255,255,255,0.015); }
+.img-rule.do { border-color: #2ECC8A; }
+.img-rule.dont { border-color: #E8384D; }
+.img-rule strong { display: block; font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 3px; }
+.img-rule.do strong { color: #2ECC8A; }
+.img-rule.dont strong { color: #E8384D; }
+
+/* Motion */
+.motion-list { display: flex; flex-direction: column; gap: 1px; margin-top: 20px; }
+.motion-item { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 16px 20px; display: grid; grid-template-columns: 32px 1fr auto; gap: 14px; align-items: start; }
+.m-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: rgba(255,255,255,0.50); flex-shrink: 0; }
+.m-title { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--fg); margin-bottom: 3px; }
+.m-desc  { font-size: 12px; color: var(--fg-muted); line-height: 1.65; }
+.m-tag   { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); border: 1px solid rgba(255,255,255,0.07); color: var(--ink-500); white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+
+/* Cadence */
+.cadence-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 20px; }
+.cadence-cell { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r-panel); padding: 22px; }
+.cadence-num  { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--fg); line-height: 1; margin-bottom: 2px; }
+.cadence-unit { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); margin-bottom: 12px; }
+.cadence-type { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--fg); margin-bottom: 5px; }
+.cadence-desc { font-size: 12px; color: var(--fg-muted); line-height: 1.6; }
+
+/* Shared helpers */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rule-div { height: 1px; background: rgba(255,255,255,0.06); margin: 28px 0; }
+
+/* ── Footer ── */
+.footer { padding: 48px 64px 0; display: flex; justify-content: space-between; align-items: flex-end; }
+.footer-txt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.12); line-height: 2; text-align: right; }
+
+/* Mobile */
+@media (max-width: 880px) {
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; flex-wrap: wrap; padding: 16px 20px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .sidebar-logo { border-bottom: none; padding: 0 16px 0 0; margin-bottom: 0; }
+  .nav-group, .nav-group-label { display: none; }
+  .nav-link { padding: 6px 10px; }
+  .main { margin-left: 0; }
+  .page-section { padding: 40px 24px 60px; }
+  .logo-grid, .two-col, .products-grid { grid-template-columns: 1fr; }
+  .principles { grid-template-columns: 1fr 1fr; }
+  .tpl-grid { grid-template-columns: 1fr; }
+  .swatches.sw-12, .swatches.sw-6 { grid-template-columns: repeat(3,1fr); }
+  .accent-grid { grid-template-columns: 1fr 1fr; }
+  .footer { padding: 40px 24px 0; }
+}
+
+/* SVG logo shorthand */
+.wm { width: 100%; height: auto; }
+
+body.brand-guide-locked {
+  overflow: hidden;
+}
+
+body.brand-guide-locked .sidebar,
+body.brand-guide-locked .main {
+  visibility: hidden;
+}
+
+.brand-login {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(74,173,232,0.16), transparent 26%),
+    radial-gradient(circle at 82% 12%, rgba(240,192,64,0.10), transparent 24%),
+    linear-gradient(180deg, #08080a, #0f0f12 58%, #08080a);
+}
+
+.brand-login[hidden] {
+  display: none;
+}
+
+.brand-login-card {
+  width: min(100%, 390px);
+  padding: 30px;
+  background: rgba(14,14,14,0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+}
+
+.brand-login-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.42);
+  margin-bottom: 12px;
+}
+
+.brand-login h1 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.05;
+  margin-bottom: 10px;
+}
+
+.brand-login p {
+  color: var(--fg-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.brand-login label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.46);
+  margin: 14px 0 8px;
+}
+
+.brand-login input {
+  width: 100%;
+  height: 46px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.28);
+  color: var(--fg);
+  padding: 0 14px;
+  font: 500 15px var(--font);
+  outline: none;
+}
+
+.brand-login input:focus {
+  border-color: rgba(255,255,255,0.34);
+}
+
+.brand-login button {
+  width: 100%;
+  height: 46px;
+  margin-top: 18px;
+  border: 1px solid rgba(255,255,255,0.88);
+  border-radius: 999px;
+  background: #f0f0f0;
+  color: #060606;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.brand-login-error {
+  min-height: 18px;
+  margin-top: 12px;
+  color: #ff8b8b;
+  font-size: 12px;
+}
+</style>
+</head>
+<body class="brand-guide-locked">
+
+<div class="brand-login" data-brand-login>
+  <form class="brand-login-card" data-brand-login-form>
+    <div class="brand-login-kicker">Private Guide</div>
+    <h1>Zylo Brand Guide</h1>
+    <p>Enter the private brand guide credentials to continue.</p>
+    <label for="brand-login-user">Username</label>
+    <input id="brand-login-user" name="username" type="text" autocomplete="username" autofocus>
+    <label for="brand-login-pass">Password</label>
+    <input id="brand-login-pass" name="password" type="password" autocomplete="current-password">
+    <button type="submit">Enter Guide</button>
+    <div class="brand-login-error" data-brand-login-error aria-live="polite"></div>
+  </form>
+</div>
+
+<!-- ══════════════════════════════════════ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 554.38 144.99" xmlns="http://www.w3.org/2000/svg">
+      <g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g>
+      <g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g>
+    </svg>
+    <div class="sidebar-version">Brand Guide 3.0</div>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Identity</span>
+    <a class="nav-link active" href="#cover">Overview</a>
+    <a class="nav-link" href="#wordmark">Wordmark</a>
+    <a class="nav-link" href="#z-mark">Z Mark</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Foundations</span>
+    <a class="nav-link" href="#colors">Colors</a>
+    <a class="nav-link" href="#typography">Typography</a>
+    <a class="nav-link" href="#spacing">Spacing &amp; Elevation</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Components</span>
+    <a class="nav-link" href="#components">Buttons &amp; Chips</a>
+    <a class="nav-link" href="#navigation">Navigation</a>
+    <a class="nav-link" href="#product-card">Product Card</a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-group-label">Brand</span>
+    <a class="nav-link" href="#products">Products</a>
+    <a class="nav-link" href="#product-icons">Product Icons</a>
+    <a class="nav-link" href="#icon-library">Icon Library</a>
+    <a class="nav-link" href="#voice">Voice &amp; Writing</a>
+    <a class="nav-link" href="#content">Content Templates</a>
+    <a class="nav-link" href="#social-posts">Social Posts</a>
+    <a class="nav-link" href="#motion">Motion &amp; Video</a>
+    <a class="nav-link" href="#principles">Principles</a>
+    <a class="nav-link" href="#merch">Merch &amp; Apparel</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════ MAIN ══ -->
+<main class="main">
+
+<!-- ─── 00 · OVERVIEW ─── -->
+<section class="page-section" id="cover">
+  <div class="cover-card">
+    <div class="cover-inner">
+      <div class="cover-eyebrow">Brand Guide 3.0</div>
+      <svg class="cover-wordmark" viewBox="0 0 554.38 144.99" xmlns="http://www.w3.org/2000/svg">
+        <g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g>
+        <g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g>
+      </svg>
+      <div class="cover-sub">Software Instruments — Identity System v3.0</div>
+      <div class="cover-chips">
+        <div class="cover-chip">Medrone</div>
+        <div class="cover-chip">Orbit Weave</div>
+        <div class="cover-chip">Zylodelay</div>
+        <div class="cover-chip">Zyloverb</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;">
+    <div class="card" style="padding:28px;">
+      <div class="card-title">About this guide</div>
+      <p>A living reference for everyone creating under the Zylo name — site, social, email, video, and print. Follow it to make content that feels native to the brand.</p>
+    </div>
+    <div class="card" style="padding:28px;">
+      <div class="card-title">Brand positioning</div>
+      <p style="font-family:var(--font-display);font-size:16px;font-weight:400;color:rgba(255,255,255,0.82);line-height:1.65;">"Software instruments for motion, texture, and atmosphere."</p>
+    </div>
+    <div class="card" style="padding:28px;">
+      <div class="card-title">Active products</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border-sub);"><span style="color:var(--fg);">Medrone</span><span style="color:#42d2a5;font-family:var(--font-mono);font-size:10px;">Synth</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border-sub);"><span style="color:var(--fg);">Orbit Weave</span><span style="color:#d8cbb4;font-family:var(--font-mono);font-size:10px;">Synth</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--border-sub);"><span style="color:var(--fg);">Zylodelay</span><span style="color:#f3ad30;font-family:var(--font-mono);font-size:10px;">Delay</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;"><span style="color:var(--fg);">Zyloverb</span><span style="color:#55bfff;font-family:var(--font-mono);font-size:10px;">Reverb</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 01 · WORDMARK ─── -->
+<section class="page-section" id="wordmark">
+  <div class="section-head">
+    <span class="section-num">01</span>
+    <span class="section-title">Wordmark</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ZYLO Wordmark — Usage</div>
+    <p>A geometric construction — Z and Y as diagonal polygon strokes, L as a right-angle form, O as a perfect circle with inner ring. Always use the SVG source file. Never rasterize below 1× and never set in any font.</p>
+
+    <div class="logo-grid" style="margin-top:28px;">
+      <div class="logo-panel dark" style="position:relative;">
+        <svg viewBox="0 0 554.38 144.99" style="color:#ffffff;" xmlns="http://www.w3.org/2000/svg" class="wm"><g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g><g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g></svg>
+        <div class="panel-note">White on #060606</div><span class="badge badge-do">DO</span>
+      </div>
+      <div class="logo-panel mid" style="position:relative;">
+        <svg viewBox="0 0 554.38 144.99" style="color:#f0f0f0;" xmlns="http://www.w3.org/2000/svg" class="wm"><g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g><g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g></svg>
+        <div class="panel-note">White on #141414</div><span class="badge badge-do">DO</span>
+      </div>
+      <div class="logo-panel light" style="position:relative;">
+        <svg viewBox="0 0 554.38 144.99" style="color:#060606;" xmlns="http://www.w3.org/2000/svg" class="wm"><g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g><g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g></svg>
+        <div class="panel-note">Black on #f0f0f0</div><span class="badge badge-do">DO</span>
+      </div>
+      <div class="logo-panel dark" style="background:#1a1830;position:relative;">
+        <svg viewBox="0 0 554.38 144.99" style="color:#42d2a5;" xmlns="http://www.w3.org/2000/svg" class="wm"><g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g><g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g></svg>
+        <div class="panel-note">Never colorize / no colored bg</div><span class="badge badge-dont">DON'T</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Wordmark Rules</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Always use the SVG file. Min display size: 120px wide screen / 25mm print.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Clear space: equal to the height of the Y on all four sides.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never stretch, rotate, outline, shadow, or add effects to the wordmark.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never set in any system font — the geometry is custom and cannot be reproduced.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never add "Instruments" beside the wordmark — the full name is the wordmark itself.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 02 · Z MARK ─── -->
+<section class="page-section" id="z-mark">
+  <div class="section-head">
+    <span class="section-num">02</span>
+    <span class="section-title">Z Mark — Standalone Symbol</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Usage Contexts</div>
+    <p>The Z letterform isolated — for social avatars, app icons, favicons, and any context where the full wordmark won't read at size. Always white on dark or black on light. Never colorize.</p>
+
+    <!-- Large display -->
+    <div style="display:flex;align-items:center;justify-content:center;padding:48px 0 32px;">
+      <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:140px;fill:#f0f0f0;">
+        <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+      </svg>
+    </div>
+
+    <div class="z-mark-row">
+
+      <!-- App icon dark -->
+      <div class="z-mark-cell" style="background:#0a0a0a;">
+        <div style="width:96px;height:96px;border-radius:21.5px;background:#111;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.06);">
+          <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:56px;height:56px;fill:#f0f0f0;">
+            <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+          </svg>
+        </div>
+        <div class="z-lbl"><b>App Icon — Dark</b>rounded sq · 22%</div>
+      </div>
+
+      <!-- Social avatar circle -->
+      <div class="z-mark-cell" style="background:#0a0a0a;">
+        <div style="width:96px;height:96px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.06);">
+          <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:54px;height:54px;fill:#f0f0f0;">
+            <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+          </svg>
+        </div>
+        <div class="z-lbl"><b>Social Avatar</b>circle crop</div>
+      </div>
+
+      <!-- App icon light -->
+      <div class="z-mark-cell" style="background:#f5f5f5;">
+        <div style="width:96px;height:96px;border-radius:21.5px;background:#e8e8e8;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:56px;height:56px;fill:#060606;">
+            <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+          </svg>
+        </div>
+        <div class="z-lbl"><b>App Icon — Light</b>on paper</div>
+      </div>
+
+      <div class="z-div"></div>
+
+      <!-- Favicon small -->
+      <div class="z-mark-cell" style="background:#0a0a0a;">
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+          <div style="width:48px;height:48px;border-radius:8px;background:#111;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.08);">
+            <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px;fill:#f0f0f0;">
+              <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+            </svg>
+          </div>
+          <div style="width:32px;height:32px;border-radius:5px;background:#111;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.08);">
+            <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;fill:#f0f0f0;">
+              <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+            </svg>
+          </div>
+        </div>
+        <div class="z-lbl"><b>Favicon</b>48px · 32px</div>
+      </div>
+
+      <!-- Bare Z transparent -->
+      <div class="z-mark-cell" style="background:#0a0a0a;">
+        <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px;fill:#f0f0f0;">
+          <polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/>
+        </svg>
+        <div class="z-lbl"><b>Bare Z</b>transparent bg</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scale test -->
+  <div class="card">
+    <div class="card-title">Scale Test</div>
+    <div style="display:flex;gap:32px;align-items:flex-end;padding:8px 0;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:96px;height:96px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">96px</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:64px;height:64px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">64px</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:48px;height:48px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">48px</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:32px;height:32px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">32px</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:24px;height:24px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">24px</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:16px;height:16px;fill:#f0f0f0;"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">16px</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Z Mark Rules</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Use at any size where the full wordmark won't fit — profile pictures, favicons, app icons.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;White Z on dark background is primary. Black Z on light background is the reversed variant.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Can be used as a low-opacity watermark over video and image content (10–20% opacity).</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never colorize the Z — white or black only.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never use the Z and the full wordmark at the same visual weight — wordmark always dominates.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 03 · COLORS ─── -->
+<section class="page-section" id="colors">
+  <div class="section-head">
+    <span class="section-num">03</span>
+    <span class="section-title">Color System</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Neutral Ink Scale — the monochrome spine</div>
+    <p>The entire brand is built on this monochrome scale. Color is the exception, not the rule.</p>
+    <div class="swatches sw-12" style="grid-template-columns:repeat(6,1fr);">
+      <div class="swatch on-dark" style="background:#060606;"><div class="sw-lbl"><span class="sw-name">ink-black</span><span class="sw-hex">#060606</span><span class="sw-role">logo · deepest</span></div></div>
+      <div class="swatch on-dark" style="background:#0a0a0a;"><div class="sw-lbl"><span class="sw-name">ink-900</span><span class="sw-hex">#0A0A0A</span><span class="sw-role">nav / footer</span></div></div>
+      <div class="swatch on-dark" style="background:#0e0e0e;"><div class="sw-lbl"><span class="sw-name">ink-850 · bg</span><span class="sw-hex">#0E0E0E</span><span class="sw-role">page bg</span></div></div>
+      <div class="swatch on-dark" style="background:#141414;"><div class="sw-lbl"><span class="sw-name">ink-800 · card</span><span class="sw-hex">#141414</span><span class="sw-role">cards</span></div></div>
+      <div class="swatch on-dark" style="background:#242424;"><div class="sw-lbl"><span class="sw-name">ink-600</span><span class="sw-hex">#242424</span><span class="sw-role">dividers</span></div></div>
+      <div class="swatch on-dark" style="background:#555555;"><div class="sw-lbl"><span class="sw-name">ink-400</span><span class="sw-hex">#555555</span><span class="sw-role">very muted</span></div></div>
+      <div class="swatch on-dark" style="background:#888888;"><div class="sw-lbl"><span class="sw-name">ink-300 · muted</span><span class="sw-hex">#888888</span><span class="sw-role">secondary text</span></div></div>
+      <div class="swatch on-light" style="background:#aaaaaa;"><div class="sw-lbl"><span class="sw-name">ink-200</span><span class="sw-hex">#AAAAAA</span><span class="sw-role">tertiary</span></div></div>
+      <div class="swatch on-light" style="background:#e8e8e8;"><div class="sw-lbl"><span class="sw-name">ink-100</span><span class="sw-hex">#E8E8E8</span><span class="sw-role">paper</span></div></div>
+      <div class="swatch on-light" style="background:#f0f0f0;"><div class="sw-lbl"><span class="sw-name">ink-white · fg</span><span class="sw-hex">#F0F0F0</span><span class="sw-role">primary text</span></div></div>
+      <div class="swatch on-light" style="background:#f5f5f5;"><div class="sw-lbl"><span class="sw-name">paper</span><span class="sw-hex">#F5F5F5</span><span class="sw-role">light bg</span></div></div>
+      <div class="swatch on-light" style="background:#ffffff;"><div class="sw-lbl"><span class="sw-name">accent</span><span class="sw-hex">#FFFFFF</span><span class="sw-role">CTA white</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Signal Palette — plugin transport &amp; state language</div>
+    <div class="swatches sw-6">
+      <div class="swatch on-dark" style="background:#2ECC8A;"><div class="sw-lbl"><span class="sw-name">sig-play</span><span class="sw-hex">#2ECC8A</span><span class="sw-role">live / safe</span></div></div>
+      <div class="swatch on-dark" style="background:#E8384D;"><div class="sw-lbl"><span class="sw-name">sig-rec</span><span class="sw-hex">#E8384D</span><span class="sw-role">hot / danger</span></div></div>
+      <div class="swatch on-dark" style="background:#F0C040;"><div class="sw-lbl"><span class="sw-name">sig-arm</span><span class="sw-hex">#F0C040</span><span class="sw-role">caution</span></div></div>
+      <div class="swatch on-dark" style="background:#4AADE8;"><div class="sw-lbl"><span class="sw-name">sig-monitor</span><span class="sw-hex">#4AADE8</span><span class="sw-role">info / link</span></div></div>
+      <div class="swatch on-dark" style="background:#FFBE78;"><div class="sw-lbl"><span class="sw-name">sig-amber</span><span class="sw-hex">#FFBE78</span><span class="sw-role">analog warmth</span></div></div>
+      <div class="swatch on-dark" style="background:#3B3D4A;"><div class="sw-lbl"><span class="sw-name">sig-stopped</span><span class="sw-hex">#3B3D4A</span><span class="sw-role">idle</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Product Accent Colors — page-scoped only, never global</div>
+    <p>Each product has its own accent used exclusively on its dedicated page. Never in global nav, footer, email, or shared content.</p>
+    <div class="accent-grid">
+      <div class="accent-cell"><div class="ac-swatch" style="background:#42d2a5;"></div><div><div class="ac-name">Medrone</div><div class="ac-meta">Synthesizer · #42d2a5</div></div><div class="ac-note">Mint / teal. Organic, living, generative.</div></div>
+      <div class="accent-cell"><div class="ac-swatch" style="background:#d8cbb4;"></div><div><div class="ac-name">Orbit Weave</div><div class="ac-meta">Synthesizer · #d8cbb4</div></div><div class="ac-note">Warm sand. Celestial, drifting, granular.</div></div>
+      <div class="accent-cell"><div class="ac-swatch" style="background:#f3ad30;"></div><div><div class="ac-name">Zylodelay</div><div class="ac-meta">Delay Effect · #f3ad30</div></div><div class="ac-note">Amber. Magnetic, ferrofluid, tape warmth.</div></div>
+      <div class="accent-cell"><div class="ac-swatch" style="background:#55bfff;"></div><div><div class="ac-name">Zyloverb</div><div class="ac-meta">Reverb Effect · #55bfff</div></div><div class="ac-note">Sky blue. Spatial, dissolving, atmospheric.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 04 · TYPOGRAPHY ─── -->
+<section class="page-section" id="typography">
+  <div class="section-head">
+    <span class="section-num">04</span>
+    <span class="section-title">Typography</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Type Scale</div>
+    <p>Syne for all display, headings, labels, nav, and uppercase text. Inter for body copy. IBM Plex Mono for readouts, tokens, and transport labels.</p>
+    <table class="type-table">
+      <tr><td><span style="font-family:'Syne',sans-serif;font-size:clamp(2.4rem,4.5vw,3.8rem);font-weight:700;letter-spacing:-0.02em;color:var(--fg);line-height:1;">Medrone</span></td><td>Display / H1</td><td>Syne · 700 · clamp(3rem–5rem) · ls -0.02em</td></tr>
+      <tr><td><span style="font-family:'Syne',sans-serif;font-size:clamp(1.5rem,2.5vw,2.2rem);font-weight:700;letter-spacing:-0.01em;color:var(--fg);">Sound in motion.</span></td><td>H2 / Section</td><td>Syne · 700 · clamp(1.8–2.5rem)</td></tr>
+      <tr><td><span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:400;letter-spacing:0.06em;text-transform:uppercase;color:var(--fg);">Instruments · Effects</span></td><td>Nav / link</td><td>Syne · 400 · 12px · ls 0.06em · uppercase</td></tr>
+      <tr><td><span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-muted);">Synthesizer</span></td><td>Label / eyebrow</td><td>Syne · 600 · 11px · ls 0.12em · uppercase</td></tr>
+      <tr><td><span style="font-family:'Inter',sans-serif;font-size:17px;font-weight:300;color:rgba(255,255,255,0.62);">Sculpt the infinite hum.</span></td><td>Hero subtitle</td><td>Inter · 300 · 17px · 1.6 lh</td></tr>
+      <tr><td><span style="font-family:'Inter',sans-serif;font-size:14px;color:var(--fg-muted);line-height:1.8;display:block;max-width:28ch;">Professional-grade synthesis for producers who demand depth.</span></td><td>Body copy</td><td>Inter · 400 · 14–15px · 1.75–1.8 lh</td></tr>
+      <tr><td><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--fg-faint);letter-spacing:0.04em;">--bg · #0e0e0e</span></td><td>Mono / readout</td><td>IBM Plex Mono · 400 · 11–12px · ls 0.04em</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Typography Rules</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Syne for all headings, labels, buttons, nav — anything uppercase or display.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Inter for all body paragraphs and multi-line descriptive text.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Label tracking: 0.12em minimum. Nav links: 0.06em. Display headlines: -0.02em.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;No serif typefaces anywhere in the brand.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never set body copy in Syne — it is a display face, not readable at paragraph length.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;No italic for emphasis — use weight or color instead.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 05 · SPACING ─── -->
+<section class="page-section" id="spacing">
+  <div class="section-head">
+    <span class="section-num">05</span>
+    <span class="section-title">Spacing &amp; Elevation</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Spacing Scale — 4px base</div>
+    <div class="sp-row">
+      <div class="sp-item"><div class="sp-bar" style="height:4px"></div><span class="sp-n">sp-1</span><span class="sp-v">4px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:8px"></div><span class="sp-n">sp-2</span><span class="sp-v">8px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:12px"></div><span class="sp-n">sp-3</span><span class="sp-v">12px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:16px"></div><span class="sp-n">sp-4</span><span class="sp-v">16px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:24px"></div><span class="sp-n">sp-5</span><span class="sp-v">24px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:32px"></div><span class="sp-n">sp-6</span><span class="sp-v">32px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:48px"></div><span class="sp-n">sp-7</span><span class="sp-v">48px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:64px"></div><span class="sp-n">sp-8</span><span class="sp-v">64px</span></div>
+      <div class="sp-item"><div class="sp-bar" style="height:80px"></div><span class="sp-n">sp-9</span><span class="sp-v">80px</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Corner Radius — 2px sharp is the brand signature</div>
+    <div class="radius-row">
+      <div class="r-item"><div class="r-box" style="border-radius:2px"></div><div class="r-lbl"><b>r-sharp</b>2px · buttons · inputs</div></div>
+      <div class="r-item"><div class="r-box" style="border-radius:6px"></div><div class="r-lbl"><b>r-card</b>6px · product cards</div></div>
+      <div class="r-item"><div class="r-box" style="border-radius:16px"></div><div class="r-lbl"><b>r-panel</b>16px · modules</div></div>
+      <div class="r-item"><div class="r-box" style="border-radius:28px"></div><div class="r-lbl"><b>r-shell</b>28px · plugin shells</div></div>
+      <div class="r-item"><div class="r-box" style="border-radius:999px"></div><div class="r-lbl"><b>r-pill</b>999px · chips · meters</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Elevation &amp; Shadows</div>
+    <div class="shadow-row">
+      <div class="sh-item"><div class="sh-box" style="box-shadow:inset 0 1px 0 rgba(255,255,255,0.04)"></div><div class="r-lbl"><b>inset-top</b>raised surface</div></div>
+      <div class="sh-item"><div class="sh-box" style="box-shadow:0 12px 32px rgba(0,0,0,0.45)"></div><div class="r-lbl"><b>shadow-pop</b>menus</div></div>
+      <div class="sh-item"><div class="sh-box" style="box-shadow:0 24px 64px rgba(0,0,0,0.60)"></div><div class="r-lbl"><b>shadow-card</b>screenshots</div></div>
+      <div class="sh-item"><div class="sh-box" style="box-shadow:0 30px 90px rgba(0,0,0,0.28)"></div><div class="r-lbl"><b>shadow-panel</b>shells</div></div>
+      <div class="sh-item"><div class="sh-box" style="box-shadow:0 0 34px rgba(74,173,232,0.32);border-color:rgba(74,173,232,0.28);"></div><div class="r-lbl"><b>glow-cyan</b>active / focus</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 06 · COMPONENTS ─── -->
+<section class="page-section" id="components">
+  <div class="section-head">
+    <span class="section-num">06</span>
+    <span class="section-title">Buttons &amp; Chips</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Buttons — Brand Variants</div>
+    <div class="comp-row">
+      <button class="btn btn-primary">Add to Cart</button>
+      <button class="btn btn-outline">Free Trial</button>
+      <button class="btn btn-ghost">Ghost</button>
+      <button class="btn btn-primary btn-sm">Sign Up</button>
+      <div class="btn-text">Learn More →</div>
+    </div>
+    <p style="margin-top:14px;font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);">Syne 700 · uppercase · <code>border-radius: 2px</code> · hover = opacity 0.82 · white-fill is primary CTA</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Status Chips &amp; Badges</div>
+    <div class="comp-row">
+      <span class="chip chip-play">● Live</span>
+      <span class="chip chip-rec">● Recording</span>
+      <span class="chip chip-arm">◉ Armed</span>
+      <span class="chip chip-monitor">◎ Monitor</span>
+      <span class="chip">New Release</span>
+      <span class="chip">Synthesizer</span>
+      <span class="chip">Effect</span>
+    </div>
+    <p style="margin-top:14px;font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);">IBM Plex Mono · 9px · pill shape (<code>border-radius: 999px</code>) · signal colors for transport states</p>
+  </div>
+</section>
+
+<!-- ─── 07 · NAVIGATION ─── -->
+<section class="page-section" id="navigation">
+  <div class="section-head">
+    <span class="section-num">07</span>
+    <span class="section-title">Navigation</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Top Navigation Bar</div>
+    <div class="nav-specimen">
+      <svg viewBox="0 0 554.38 144.99" style="height:18px;width:auto;color:var(--fg);" xmlns="http://www.w3.org/2000/svg"><g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g><g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g></svg>
+      <div class="nav-spec-links"><span>Synths</span><span>Effects</span><span>Support</span><span>Merch</span></div>
+      <button class="btn btn-outline btn-sm">Free Trial</button>
+    </div>
+    <p style="margin-top:14px;font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);">Height 64px · bg <code>--bg-nav</code> (#0a0a0a) · links: Syne 400, 10px, 0.06em, uppercase · CTA: outline button</p>
+
+    <!-- Nav structure breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">
+      <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-panel);padding:18px 20px;">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:12px;">Primary Links</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);width:60px;">Synths ▾</span>
+            <span style="font-size:11px;color:var(--fg-muted);">→ Medrone, Orbit Weave</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);width:60px;">Effects ▾</span>
+            <span style="font-size:11px;color:var(--fg-muted);">→ ZyloVerb, ZyloDelay</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);width:60px;">Support</span>
+            <span style="font-size:11px;color:var(--fg-muted);">support.html</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);width:60px;">Merch</span>
+            <span style="font-size:11px;color:var(--fg-muted);">merch.html</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--r-panel);padding:18px 20px;">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:12px;">Right Rail</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:11px;color:var(--fg-muted);">Login — text link, Syne 400</div>
+          <div style="font-size:11px;color:var(--fg-muted);">Cart icon — stroke SVG, 24px</div>
+          <div style="font-size:11px;color:var(--fg-muted);">Hamburger — 3-line, mobile only</div>
+        </div>
+        <div style="margin-top:12px;font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">Mobile nav expands below header as a vertical list — same links + Join Launch List CTA button</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="card">
+    <div class="card-title">Site Footer</div>
+    <p>4-column grid: brand block + 3 link columns. Dark background, ZYLO wordmark top-left of brand column, social icons bottom-right.</p>
+
+    <!-- Footer mock -->
+    <div style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.08);border-radius:var(--r-panel);padding:32px 28px 20px;margin-top:16px;">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:28px;margin-bottom:24px;">
+        <!-- Brand col -->
+        <div>
+          <svg viewBox="0 0 792 612" style="height:20px;width:auto;fill:white;display:block;margin-bottom:12px;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg>
+          <p style="font-size:11px;color:var(--fg-faint);line-height:1.7;margin:0;max-width:200px;">Professional-grade synthesis and effects plugins for producers who demand depth.</p>
+        </div>
+        <!-- Products col -->
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:10px;">Products</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--fg-faint);">
+            <span>Medrone</span><span>Orbit Weave</span><span>Phase Lattice</span><span>ZyloVerb</span><span>ZyloDelay</span>
+          </div>
+        </div>
+        <!-- Company col -->
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:10px;">Company</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--fg-faint);">
+            <span>Support</span><span>Merch</span><span>FAQ</span><span>Contact</span>
+          </div>
+        </div>
+        <!-- Legal col -->
+        <div>
+          <div style="font-family:var(--font-display);font-size:11px;font-weight:700;color:var(--fg);margin-bottom:10px;">Legal</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--fg-faint);">
+            <span>Privacy Policy</span><span>Terms of Use</span><span>Refund Policy</span><span>EULA</span>
+          </div>
+        </div>
+      </div>
+      <!-- Footer bottom bar -->
+      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">© 2025 Zylo Instruments. All rights reserved.</span>
+        <div style="display:flex;gap:14px;">
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">Instagram</span>
+          <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">YouTube</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);line-height:1.9;">
+        <span style="display:block;color:var(--fg-muted);margin-bottom:4px;">Footer specs</span>
+        bg: <code>#0d0d0d</code><br>
+        grid: 4-col (2fr · 1fr · 1fr · 1fr)<br>
+        col heads: Syne 700 · 11px<br>
+        col links: Syne 400 · 11px · <code>--fg-faint</code><br>
+        wordmark: white, height 20px
+      </div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);line-height:1.9;">
+        <span style="display:block;color:var(--fg-muted);margin-bottom:4px;">Bottom bar</span>
+        border-top: 1px <code>rgba(255,255,255,0.07)</code><br>
+        copyright: mono 9px · left<br>
+        social: Instagram + YouTube · right<br>
+        social icons: 24px fill SVG · white
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 08 · PRODUCT CARD ─── -->
+<section class="page-section" id="product-card">
+  <div class="section-head">
+    <span class="section-num">08</span>
+    <span class="section-title">Product Card</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Plugin Card — Image, Label, Price</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:4px;align-items:flex-start;">
+      <div class="product-card">
+        <div class="img" style="background-image:url('Zylo Design System/assets/imagery/medrone-hero.png');background-size:cover;background-position:center;aspect-ratio:16/9;"></div>
+        <div class="body"><span class="lbl">Synthesizer</span><span class="name">Medrone</span><span class="tag">Sculpt the infinite hum.</span><span class="price">$129</span><span class="link">View Plugin →</span></div>
+      </div>
+      <div class="product-card">
+        <div class="img" style="background-image:url('Zylo Design System/assets/imagery/zylodelay-hero.png');background-size:cover;background-position:center;aspect-ratio:16/9;"></div>
+        <div class="body"><span class="lbl">Delay Effect</span><span class="name">Zylodelay</span><span class="tag">Time as texture.</span><span class="price">$79</span><span class="link">View Plugin →</span></div>
+      </div>
+      <div class="product-card">
+        <div class="img" style="background-image:url('Zylo Design System/assets/imagery/zyloverb-hero.png');background-size:cover;background-position:center;aspect-ratio:16/9;"></div>
+        <div class="body"><span class="lbl">Reverb Effect</span><span class="name">Zyloverb</span><span class="tag">Dissolve into the room.</span><span class="price">$79</span><span class="link">View Plugin →</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--fg-muted);line-height:1.9;padding-top:4px;max-width:240px;">
+        <span style="font-family:var(--font-mono);font-size:9px;display:block;color:var(--fg-faint);letter-spacing:0.10em;text-transform:uppercase;margin-bottom:10px;">Card spec</span>
+        bg: <code>--bg-card</code> #141414<br>
+        border: 1px <code>rgba(255,255,255,.06)</code><br>
+        radius: <strong style="color:var(--fg);">0px</strong> — square<br>
+        image: 16:9 aspect ratio<br>
+        name: Syne 700 · 1rem<br>
+        label: Syne 600 · 0.62rem
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 09 · PRODUCTS ─── -->
+<section class="page-section" id="products">
+  <div class="section-head">
+    <span class="section-num">09</span>
+    <span class="section-title">Products &amp; Taglines</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Active Products</div>
+    <p>Names and taglines are fixed. Never paraphrase, abbreviate, or split compound names. The tagline is the primary headline for any product content.</p>
+    <div class="products-grid">
+      <div class="product-cell"><div class="prod-type" style="color:#42d2a5;">Synthesizer</div><div class="prod-name">Medrone</div><div class="prod-tagline">"Sculpt the infinite hum."</div><div class="prod-note">accent #42d2a5 · page-scoped</div></div>
+      <div class="product-cell"><div class="prod-type" style="color:#d8cbb4;">Synthesizer</div><div class="prod-name">Orbit Weave</div><div class="prod-tagline">"Sound in perpetual motion."</div><div class="prod-note">accent #d8cbb4 · Two words, capital W</div></div>
+      <div class="product-cell"><div class="prod-type" style="color:#f3ad30;">Delay Effect</div><div class="prod-name">Zylodelay</div><div class="prod-tagline">"Time as texture."</div><div class="prod-note">accent #f3ad30 · One word</div></div>
+      <div class="product-cell"><div class="prod-type" style="color:#55bfff;">Reverb Effect</div><div class="prod-name">Zyloverb</div><div class="prod-tagline">"Dissolve into the room."</div><div class="prod-note">accent #55bfff · One word</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Naming Rules</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;"Zylodelay" and "Zyloverb" are one word — no space, no hyphen.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;"Orbit Weave" is always two words with a capital W.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✓ &nbsp;Pair the product tagline whenever space allows — it is part of the product identity.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never write "Zylo Delay" or "Zylo Verb" as separate words.</div>
+      <div style="font-size:14px;color:#b3b5bc;">✗ &nbsp;Never use one product's accent color in another product's content.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 10 · PRODUCT ICONS ─── -->
+<section class="page-section" id="product-icons">
+  <div class="section-head">
+    <span class="section-num">10</span>
+    <span class="section-title">Product Icons</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Five Product Mark Icons — one per instrument</div>
+    <p>Each product has a dedicated icon drawn from its sonic character. Used in product chips, UI labels, social post tags, and marketing materials. Always rendered in the product's accent color or white — never black on dark.</p>
+
+    <!-- Icon showcase row -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:28px;">
+
+      <!-- Medrone -->
+      <div style="background:rgba(46,204,138,0.06);border:1px solid rgba(46,204,138,0.18);border-radius:var(--r-panel);padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg viewBox="0 0 89.55 39.43" style="width:80px;;fill:#2ECC8A" xmlns="http://www.w3.org/2000/svg"><path d="M35.69,38.37l-1.71.06c-.92.03-1.75-.1-2.65-.31-2.45-.56-4.63-1.71-6.62-3.22l-1.08-.88-.79-.73-.97-1-.21-.74.69-.93c.77.12,1.42.39,2.09.72.53.26,1.07.39,1.64.53,2.2.54,4.48.56,6.62-.23,1.77-.65,3.33-1.54,4.73-2.82l.83-.77,1.38-1.45.97-1.17,2.08-3.16,1.84-3.47-3.1-4.95-1.14,2.22-.42.92-1.52,3-1.23,2.22-1.16,2.04-.78,1.53c-.18.36-.48.61-.86.62-.47.02-.81-.12-1.05-.52l-1-1.65-2.44-3.95-3.82-6.04-.95,1.5-1.94,3.22-.57.94-1.3,2.15-.84,1.48-.91,1.57-.57.94c-.17.28-.28.4-.59.49-.55.16-.95-.03-1.25-.51l-2.81-4.54-3.01-4.7-1.72-2.62-.45.68-.99,1.7-1.98,3.33-.58,1.04-.39.69-.55.93-.47.87-.81,1.42-.68,1.26c-.15.29-.42.57-.67.62-.32.06-.76-.07-.89-.37-.16-.38-.07-.82.13-1.16l3.75-6.54,3.36-5.78.65-.97c.22-.11.77-.13,1.01-.04.49.42.73,1,1.07,1.52l1.26,1.92,2,3.16,3.68,5.72,1.16-1.88,1.18-1.94,2.07-3.42.62-1.07,1.03-1.7.37-.7.49-.84c.13-.23.29-.49.53-.65.27-.18,1-.17,1.21.16l2.69,4.31.98,1.51,2.22,3.53,1.57,2.5.49-.81,2.04-3.64,2.09-4.2.96-1.97,1-1.92.58-1.02,1.73-2.53c.49-.71,1.03-1.39,1.65-1.99l.55-.53.79-.69.99-.71,1.62-.97.78-.37c1.36-.65,2.7-1.17,4.2-1.31l3.06-.29c1.42-.03,2.81.22,4.16.63l2.99,1.18c.56.22,1.03.54,1.52.89l1.67,1.16,1.27,1.14.96.93-.06.75-.37.63-.59.11-.65-.22c-1.45-.72-2.91-1.25-4.53-1.45-.72-.09-1.4-.17-2.11-.11-1.38.11-2.64.44-3.87,1l-.88.39c-1.38.62-2.58,1.5-3.72,2.49-1.01.86-1.85,1.79-2.63,2.87l-.13.11s-.07.03-.06,0l.05-.29c-.34.21-.63.65-.53,1.09l-.28.13c-.05.03-.03.18-.04.24l-.55.87-.38.63-.82,1.49-.32.13-.34.62,2.5,4.03.82,1.29.52-1.17.83-1.75.28-.71c.95-2.03,2-3.93,3.05-5.89l1.25-2.32c.12-.23.4-.44.61-.51s.77.03.91.25l1.56,2.51,2.51,4.05,2.45,3.93.93,1.32,2.18-3.68,3.7-6.4,1-1.75c.14-.25.59-.4.82-.38.31.02.64.29.81.56l.56.88.93,1.45.74,1.14,4.2,6.52.94,1.39.09.14s.09-.02.14-.09l.83-1.46,1.57-2.88,3.77-7.14c.21-.41.39-.73.91-.63.39.07.67.38.65.9,0,.42-.32.83-.51,1.2l-.92,1.77-1.99,3.76-.76,1.38-1.69,3.28-1.23,2.22c-.35.14-.81.15-1.16.05l-.37-.44-.65-1.03-.58-.92-1.98-3.09-1.74-2.7-1.68-2.58-.88-1.34-1.14,1.89-1.02,1.72-1.47,2.53-2.3,4.08-.62,1.06-.5.77c-.17.26-.63.27-.88.21-.35-.09-.48-.32-.68-.63l-2.4-3.8-2.03-3.3-2.72-4.3-2.79,5.2-3,6.74-.81,1.6-1.18,2.11c-.57,1.03-1.24,1.97-2.06,2.82l-.91.95-1.56,1.37c-1.28,1.13-4.33,2.63-5.94,2.95l-1.16.23-1.54.18Z"/></svg>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:#2ECC8A;margin-bottom:4px;">Medrone</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);letter-spacing:0.08em;">EKG / waveform</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--fg-faint);opacity:0.5;margin-top:3px;">icon1_medrone.svg</div>
+        </div>
+      </div>
+
+      <!-- Orbit Weave -->
+      <div style="background:rgba(74,173,232,0.06);border:1px solid rgba(74,173,232,0.18);border-radius:var(--r-panel);padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg viewBox="0 0 48.04 48.04" style="width:56px;fill:#d8cbb4;" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10.43,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M26.42,45.64c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M21.62,2.4c0-1.33,1.08-2.4,2.4-2.4s2.4,1.08,2.4,2.4-1.08,2.4-2.4,2.4-2.4-1.08-2.4-2.4M10.43,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M48.04,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M4.8,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M24.02,28.83c-2.65,0-4.8-2.15-4.8-4.8s2.15-4.8,4.8-4.8,4.8,2.15,4.8,4.8-2.15,4.8-4.8,4.8M24.02,14.41c-5.31,0-9.61,4.3-9.61,9.61s4.3,9.61,9.61,9.61,9.61-4.3,9.61-9.61-4.3-9.61-9.61-9.61"/>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:#d8cbb4;margin-bottom:4px;">Orbit Weave</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);letter-spacing:0.08em;">concentric orbits</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--fg-faint);opacity:0.5;margin-top:3px;">icon2_orbit_weave.svg</div>
+        </div>
+      </div>
+
+      <!-- ZyloDelay -->
+      <div style="background:rgba(255,190,120,0.06);border:1px solid rgba(255,190,120,0.18);border-radius:var(--r-panel);padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg viewBox="0 -0.5 20 20" style="width:52px;fill:#FFBE78;" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(-4,-3160)" fill-rule="evenodd"><path d="M14.0000871,3171.007 L13.9940871,3171 L8.00008712,3177.4 L9.49808712,3179 L14.0000871,3174.194 L18.5020871,3179 L20.0000871,3177.4 L14.0060871,3171 L14.0000871,3171.007 Z M12.6360871,3168.586 C13.4170871,3169.367 14.7560871,3169.294 15.4640871,3168.587 C16.1290871,3167.921 16.2530871,3166.543 15.3670871,3165.657 L15.3640871,3165.66 C14.5830871,3164.879 13.2430871,3164.952 12.5360871,3165.659 C11.8710871,3166.325 11.7470871,3167.703 12.6330871,3168.589 L12.6360871,3168.586 Z M9.80508712,3171.417 L11.2190871,3170.003 C9.80508712,3168.589 9.70608712,3165.657 11.1200871,3164.243 L9.70608712,3162.829 C7.58408712,3164.95 7.68308712,3169.296 9.80508712,3171.417 Z M8.29108712,3161.415 L6.87708712,3160 C2.63408712,3164.243 3.44108712,3170.71 6.97608712,3174.246 L8.39008712,3172.832 C5.56208712,3170.003 5.46308712,3164.243 8.29108712,3161.415 Z M16.8800871,3170.003 L18.2940871,3171.417 C20.4160871,3169.296 20.3170871,3164.95 18.1950871,3162.829 L16.7810871,3164.243 C18.1950871,3165.657 18.2940871,3168.589 16.8800871,3170.003 Z M21.1230871,3174.246 L19.7090871,3172.832 C22.5370871,3170.003 22.4380871,3164.243 19.6100871,3161.415 L21.0240871,3160 C24.5590871,3163.536 25.3650871,3170.003 21.1230871,3174.246 Z"/></g>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:#FFBE78;margin-bottom:4px;">ZyloDelay</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);letter-spacing:0.08em;">bidirectional arrows</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--fg-faint);opacity:0.5;margin-top:3px;">radio-tower-1108-svgrepo-com.svg</div>
+        </div>
+      </div>
+
+      <!-- ZyloVerb -->
+      <div style="background:rgba(232,56,77,0.06);border:1px solid rgba(232,56,77,0.18);border-radius:var(--r-panel);padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg viewBox="0 0 46.22 46.22" style="width:54px;fill:#E8384D;" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M36.98,6.93c0-2.99,4.62-3.12,4.62,0s-4.62,3.11-4.62,0M23.11,41.6c-10.19,0-18.49-8.29-18.49-18.49S12.92,4.62,23.11,4.62c3.38,0,6.54.93,9.26,2.51.11,3.66,3.05,6.6,6.71,6.71,1.59,2.73,2.51,5.89,2.51,9.26,0,10.19-8.29,18.49-18.49,18.49M46.22,6.93c0-3.83-3.1-6.93-6.93-6.93-2.21,0-4.16,1.05-5.42,2.66-3.21-1.69-6.87-2.66-10.75-2.66C10.35,0,0,10.35,0,23.11s10.35,23.11,23.11,23.11,23.11-10.35,23.11-23.11c0-3.88-.97-7.54-2.66-10.75,1.61-1.27,2.66-3.21,2.66-5.42M23.11,30.04c-3.82,0-6.93-3.11-6.93-6.93s3.11-6.93,6.93-6.93,6.93,3.11,6.93,6.93-3.11,6.93-6.93,6.93M23.11,11.55c-6.38,0-11.55,5.17-11.55,11.55s5.17,11.55,11.55,11.55,11.55-5.17,11.55-11.55-5.17-11.55-11.55-11.55"/>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:#E8384D;margin-bottom:4px;">ZyloVerb</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);letter-spacing:0.08em;">planet system</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--fg-faint);opacity:0.5;margin-top:3px;">icon4verb.svg</div>
+        </div>
+      </div>
+
+      <!-- Phase Lattice -->
+      <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);border-radius:var(--r-panel);padding:28px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <svg viewBox="0 0 20 20" style="width:56px;fill:#A78BFA;" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(-4,-4399)" fill-rule="evenodd"><path d="M6.70247571,4412.07175 L12.0994757,4404.08575 C12.3864757,4403.69975 13.0004757,4403.90275 13.0004757,4404.38375 L13.0004757,4415.43475 C13.0004757,4415.82075 12.5804757,4416.06175 12.2474757,4415.86675 L6.85047571,4412.80175 C6.59347571,4412.65075 6.52447571,4412.31075 6.70247571,4412.07175 Z M21.1494757,4412.80175 L15.7534757,4415.86675 C15.4194757,4416.06175 15.0004757,4415.82075 15.0004757,4415.43475 L15.0004757,4404.38375 C15.0004757,4403.90275 15.6134757,4403.69975 15.9014757,4404.08575 L21.2984757,4412.07175 C21.4754757,4412.31075 21.4064757,4412.65075 21.1494757,4412.80175 Z M15.0004757,4399.52575 C14.5184757,4398.82475 13.4824757,4398.82475 13.0004757,4399.52575 L4.24047571,4412.02975 C3.80847571,4412.60975 3.97647571,4413.43575 4.60047571,4413.80175 L13.0004757,4418.62575 L13.4234757,4418.85375 C13.7834757,4419.04775 14.2164757,4419.04775 14.5764757,4418.85375 L15.0004757,4418.62575 L23.4004757,4413.80175 C24.0234757,4413.43575 24.1914757,4412.60975 23.7604757,4412.02975 L15.0004757,4399.52575 Z"/></g>
+        </svg>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:#A78BFA;margin-bottom:4px;">Phase Lattice</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);letter-spacing:0.08em;">3d lattice / prism</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--fg-faint);opacity:0.5;margin-top:3px;">3d-modelling-round-820-svgrepo-com.svg</div>
+        </div>
+      </div>
+
+    </div>
+    <p style="font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);letter-spacing:0.06em;margin-top:16px;text-align:center;">Five Product Mark Icons — one per instrument</p>
+  </div>
+
+  <!-- ── General / Brand images ── -->
+  <div class="card">
+    <div class="card-title">Brand Images — General Use</div>
+    <p>Used for brand-level posts, brand awareness, lifestyle content, and any post not tied to a specific product. Mix with ZYLO wordmark only — no product chip or product color tint.</p>
+    <div class="gen-grid">
+      <img src="product_specific_images/zylo_general/ckadobe41_35mm_candid_film_photo_natural_walking_motion_Pacific_3170c3a5-38f9-421b-bf3e-c02973c30cd8.png" alt="">
+      <img src="product_specific_images/zylo_general/ckadobe41_5mm_photo_female_model_on_the_train_playing_with_her__39e9f770-32ea-4eeb-a0d8-ac8aef985867.png" alt="">
+      <img src="product_specific_images/zylo_general/ckadobe41_35mm_film_still_in_outer_space_close-up_of_a_ballerin_1cfa3771-d1d0-4968-b0c9-1bc77d7df982.png" alt="">
+      <img src="product_specific_images/zylo_general/ckadobe41_35mm_film_photograph_of_Olympic_National_Park_rainfor_bb52d31c-8fb2-4716-ac0e-0018b6af290f.png" alt="">
+    </div>
+  </div>
+
+  <!-- ── Post template gallery ── -->
+  <div class="card">
+    <div class="card-title">Post Template — Product Focus (1:1 · 4:5)</div>
+    <p>Every product post follows this structure: full-bleed image from the product's image set, heavy dark base + product color tint overlay at 30–40%, ZYLO wordmark top-left, product icon + name + tagline bottom-left. The image does the mood work — type stays minimal.</p>
+    <div class="mock-row">
+
+      <!-- Medrone mockup -->
+      <div>
+        <div class="post-mock">
+          <img src="product_specific_images/medrone/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_923ab54e-ee4f-4b09-a0f9-3ca7f2518bd6.png" alt="">
+          <div class="pm-overlay" style="background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 40%,rgba(0,0,0,0.72) 100%);"></div>
+          <div class="pm-overlay" style="background:rgba(46,204,138,0.22);"></div>
+          <div class="pm-content">
+            <div class="pm-top">
+              <div class="pm-wm"><svg viewBox="0 0 792 612" style="width:100%;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+            </div>
+            <div class="pm-bottom">
+              <div class="pm-icon"><svg viewBox="0 0 89.55 39.43" style="width:44px;;fill:#2ECC8A" xmlns="http://www.w3.org/2000/svg"><path d="M35.69,38.37l-1.71.06c-.92.03-1.75-.1-2.65-.31-2.45-.56-4.63-1.71-6.62-3.22l-1.08-.88-.79-.73-.97-1-.21-.74.69-.93c.77.12,1.42.39,2.09.72.53.26,1.07.39,1.64.53,2.2.54,4.48.56,6.62-.23,1.77-.65,3.33-1.54,4.73-2.82l.83-.77,1.38-1.45.97-1.17,2.08-3.16,1.84-3.47-3.1-4.95-1.14,2.22-.42.92-1.52,3-1.23,2.22-1.16,2.04-.78,1.53c-.18.36-.48.61-.86.62-.47.02-.81-.12-1.05-.52l-1-1.65-2.44-3.95-3.82-6.04-.95,1.5-1.94,3.22-.57.94-1.3,2.15-.84,1.48-.91,1.57-.57.94c-.17.28-.28.4-.59.49-.55.16-.95-.03-1.25-.51l-2.81-4.54-3.01-4.7-1.72-2.62-.45.68-.99,1.7-1.98,3.33-.58,1.04-.39.69-.55.93-.47.87-.81,1.42-.68,1.26c-.15.29-.42.57-.67.62-.32.06-.76-.07-.89-.37-.16-.38-.07-.82.13-1.16l3.75-6.54,3.36-5.78.65-.97c.22-.11.77-.13,1.01-.04.49.42.73,1,1.07,1.52l1.26,1.92,2,3.16,3.68,5.72,1.16-1.88,1.18-1.94,2.07-3.42.62-1.07,1.03-1.7.37-.7.49-.84c.13-.23.29-.49.53-.65.27-.18,1-.17,1.21.16l2.69,4.31.98,1.51,2.22,3.53,1.57,2.5.49-.81,2.04-3.64,2.09-4.2.96-1.97,1-1.92.58-1.02,1.73-2.53c.49-.71,1.03-1.39,1.65-1.99l.55-.53.79-.69.99-.71,1.62-.97.78-.37c1.36-.65,2.7-1.17,4.2-1.31l3.06-.29c1.42-.03,2.81.22,4.16.63l2.99,1.18c.56.22,1.03.54,1.52.89l1.67,1.16,1.27,1.14.96.93-.06.75-.37.63-.59.11-.65-.22c-1.45-.72-2.91-1.25-4.53-1.45-.72-.09-1.4-.17-2.11-.11-1.38.11-2.64.44-3.87,1l-.88.39c-1.38.62-2.58,1.5-3.72,2.49-1.01.86-1.85,1.79-2.63,2.87l-.13.11s-.07.03-.06,0l.05-.29c-.34.21-.63.65-.53,1.09l-.28.13c-.05.03-.03.18-.04.24l-.55.87-.38.63-.82,1.49-.32.13-.34.62,2.5,4.03.82,1.29.52-1.17.83-1.75.28-.71c.95-2.03,2-3.93,3.05-5.89l1.25-2.32c.12-.23.4-.44.61-.51s.77.03.91.25l1.56,2.51,2.51,4.05,2.45,3.93.93,1.32,2.18-3.68,3.7-6.4,1-1.75c.14-.25.59-.4.82-.38.31.02.64.29.81.56l.56.88.93,1.45.74,1.14,4.2,6.52.94,1.39.09.14s.09-.02.14-.09l.83-1.46,1.57-2.88,3.77-7.14c.21-.41.39-.73.91-.63.39.07.67.38.65.9,0,.42-.32.83-.51,1.2l-.92,1.77-1.99,3.76-.76,1.38-1.69,3.28-1.23,2.22c-.35.14-.81.15-1.16.05l-.37-.44-.65-1.03-.58-.92-1.98-3.09-1.74-2.7-1.68-2.58-.88-1.34-1.14,1.89-1.02,1.72-1.47,2.53-2.3,4.08-.62,1.06-.5.77c-.17.26-.63.27-.88.21-.35-.09-.48-.32-.68-.63l-2.4-3.8-2.03-3.3-2.72-4.3-2.79,5.2-3,6.74-.81,1.6-1.18,2.11c-.57,1.03-1.24,1.97-2.06,2.82l-.91.95-1.56,1.37c-1.28,1.13-4.33,2.63-5.94,2.95l-1.16.23-1.54.18Z"/></svg></div>
+              <div class="pm-label" style="color:#2ECC8A;">Medrone</div>
+              <div class="pm-hl">Living drone<br>synthesis.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-faint);margin-top:8px;text-align:center;">Medrone · product/medrone</div>
+      </div>
+
+      <!-- Orbit Weave mockup -->
+      <div>
+        <div class="post-mock">
+          <img src="product_specific_images/orbit_weave/ckadobe41_close-up_view_flying_above_Jupiters_cloudscape_intric_7127ea67-b00c-4384-a3d9-40a6cd5b6cce.png" alt="">
+          <div class="pm-overlay" style="background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 40%,rgba(0,0,0,0.72) 100%);"></div>
+          <div class="pm-overlay" style="background:rgba(216,203,180,0.28);"></div>
+          <div class="pm-content">
+            <div class="pm-top">
+              <div class="pm-wm"><svg viewBox="0 0 792 612" style="width:100%;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+            </div>
+            <div class="pm-bottom">
+              <div class="pm-icon"><svg viewBox="0 0 48.04 48.04" style="width:16px;fill:#d8cbb4;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.43,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M26.42,45.64c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M21.62,2.4c0-1.33,1.08-2.4,2.4-2.4s2.4,1.08,2.4,2.4-1.08,2.4-2.4,2.4-2.4-1.08-2.4-2.4M10.43,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M48.04,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M4.8,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M24.02,28.83c-2.65,0-4.8-2.15-4.8-4.8s2.15-4.8,4.8-4.8,4.8,2.15,4.8,4.8-2.15,4.8-4.8,4.8M24.02,14.41c-5.31,0-9.61,4.3-9.61,9.61s4.3,9.61,9.61,9.61,9.61-4.3,9.61-9.61-4.3-9.61-9.61-9.61"/></svg></div>
+              <div class="pm-label" style="color:#d8cbb4;">Orbit Weave</div>
+              <div class="pm-hl">Weave your<br>pulse.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-faint);margin-top:8px;text-align:center;">Orbit Weave · orbit_weave</div>
+      </div>
+
+      <!-- ZyloDelay mockup -->
+      <div>
+        <div class="post-mock">
+          <img src="product_specific_images/zylodelay/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_ebd894b3-1e40-4373-ab9b-9895d72e7900.png" alt="">
+          <div class="pm-overlay" style="background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 40%,rgba(0,0,0,0.72) 100%);"></div>
+          <div class="pm-overlay" style="background:rgba(255,190,120,0.22);"></div>
+          <div class="pm-content">
+            <div class="pm-top">
+              <div class="pm-wm"><svg viewBox="0 0 792 612" style="width:100%;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+            </div>
+            <div class="pm-bottom">
+              <div class="pm-icon"><svg viewBox="0 -0.5 20 20" style="width:16px;fill:#FFBE78;" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-4,-3160)" fill-rule="evenodd"><path d="M14.0000871,3171.007 L13.9940871,3171 L8.00008712,3177.4 L9.49808712,3179 L14.0000871,3174.194 L18.5020871,3179 L20.0000871,3177.4 L14.0060871,3171 L14.0000871,3171.007 Z M12.6360871,3168.586 C13.4170871,3169.367 14.7560871,3169.294 15.4640871,3168.587 C16.1290871,3167.921 16.2530871,3166.543 15.3670871,3165.657 L15.3640871,3165.66 C14.5830871,3164.879 13.2430871,3164.952 12.5360871,3165.659 C11.8710871,3166.325 11.7470871,3167.703 12.6330871,3168.589 L12.6360871,3168.586 Z M9.80508712,3171.417 L11.2190871,3170.003 C9.80508712,3168.589 9.70608712,3165.657 11.1200871,3164.243 L9.70608712,3162.829 C7.58408712,3164.95 7.68308712,3169.296 9.80508712,3171.417 Z M8.29108712,3161.415 L6.87708712,3160 C2.63408712,3164.243 3.44108712,3170.71 6.97608712,3174.246 L8.39008712,3172.832 C5.56208712,3170.003 5.46308712,3164.243 8.29108712,3161.415 Z M16.8800871,3170.003 L18.2940871,3171.417 C20.4160871,3169.296 20.3170871,3164.95 18.1950871,3162.829 L16.7810871,3164.243 C18.1950871,3165.657 18.2940871,3168.589 16.8800871,3170.003 Z M21.1230871,3174.246 L19.7090871,3172.832 C22.5370871,3170.003 22.4380871,3164.243 19.6100871,3161.415 L21.0240871,3160 C24.5590871,3163.536 25.3650871,3170.003 21.1230871,3174.246 Z"/></g></svg></div>
+              <div class="pm-label" style="color:#FFBE78;">ZyloDelay</div>
+              <div class="pm-hl">Repeat the<br>moment.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-faint);margin-top:8px;text-align:center;">ZyloDelay · zylodelay</div>
+      </div>
+
+      <!-- ZyloVerb mockup -->
+      <div>
+        <div class="post-mock">
+          <img src="product_specific_images/zyloverb/ckadobe41_35mm_film_photograph_of_flowing_ballet_fabric_driftin_879966bf-39bf-462b-8e9b-2e5277b61521.png" alt="">
+          <div class="pm-overlay" style="background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 40%,rgba(0,0,0,0.72) 100%);"></div>
+          <div class="pm-overlay" style="background:rgba(85,191,255,0.22);"></div>
+          <div class="pm-content">
+            <div class="pm-top">
+              <div class="pm-wm"><svg viewBox="0 0 792 612" style="width:100%;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+            </div>
+            <div class="pm-bottom">
+              <div class="pm-icon"><svg viewBox="0 0 46.22 46.22" style="width:16px;fill:#55bfff;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M36.98,6.93c0-2.99,4.62-3.12,4.62,0s-4.62,3.11-4.62,0M23.11,41.6c-10.19,0-18.49-8.29-18.49-18.49S12.92,4.62,23.11,4.62c3.38,0,6.54.93,9.26,2.51.11,3.66,3.05,6.6,6.71,6.71,1.59,2.73,2.51,5.89,2.51,9.26,0,10.19-8.29,18.49-18.49,18.49M46.22,6.93c0-3.83-3.1-6.93-6.93-6.93-2.21,0-4.16,1.05-5.42,2.66-3.21-1.69-6.87-2.66-10.75-2.66C10.35,0,0,10.35,0,23.11s10.35,23.11,23.11,23.11,23.11-10.35,23.11-23.11c0-3.88-.97-7.54-2.66-10.75,1.61-1.27,2.66-3.21,2.66-5.42M23.11,30.04c-3.82,0-6.93-3.11-6.93-6.93s3.11-6.93,6.93-6.93,6.93,3.11,6.93,6.93-3.11,6.93-6.93,6.93M23.11,11.55c-6.38,0-11.55,5.17-11.55,11.55s5.17,11.55,11.55,11.55,11.55-5.17,11.55-11.55-5.17-11.55-11.55-11.55"/></svg></div>
+              <div class="pm-label" style="color:#55bfff;">ZyloVerb</div>
+              <div class="pm-hl">Inhabit<br>the space.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-faint);margin-top:8px;text-align:center;">ZyloVerb · zyloverb</div>
+      </div>
+
+      <!-- Phase Lattice mockup -->
+      <div>
+        <div class="post-mock">
+          <img src="product_specific_images/phase_lattice/ckadobe41_35mm_cinematic_film_still_of_an_abstract_wireframe_te_31204692-8c63-4490-bb50-46f6436a28ea.png" alt="">
+          <div class="pm-overlay" style="background:linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.2) 40%,rgba(0,0,0,0.72) 100%);"></div>
+          <div class="pm-overlay" style="background:rgba(167,139,250,0.22);"></div>
+          <div class="pm-content">
+            <div class="pm-top">
+              <div class="pm-wm"><svg viewBox="0 0 792 612" style="width:100%;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+            </div>
+            <div class="pm-bottom">
+              <div class="pm-icon"><svg viewBox="0 0 20 20" style="width:22px;fill:#A78BFA;" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-4,-4399)" fill-rule="evenodd"><path d="M6.70247571,4412.07175 L12.0994757,4404.08575 C12.3864757,4403.69975 13.0004757,4403.90275 13.0004757,4404.38375 L13.0004757,4415.43475 C13.0004757,4415.82075 12.5804757,4416.06175 12.2474757,4415.86675 L6.85047571,4412.80175 C6.59347571,4412.65075 6.52447571,4412.31075 6.70247571,4412.07175 Z M21.1494757,4412.80175 L15.7534757,4415.86675 C15.4194757,4416.06175 15.0004757,4415.82075 15.0004757,4415.43475 L15.0004757,4404.38375 C15.0004757,4403.90275 15.6134757,4403.69975 15.9014757,4404.08575 L21.2984757,4412.07175 C21.4754757,4412.31075 21.4064757,4412.65075 21.1494757,4412.80175 Z M15.0004757,4399.52575 C14.5184757,4398.82475 13.4824757,4398.82475 13.0004757,4399.52575 L4.24047571,4412.02975 C3.80847571,4412.60975 3.97647571,4413.43575 4.60047571,4413.80175 L13.0004757,4418.62575 L13.4234757,4418.85375 C13.7834757,4419.04775 14.2164757,4419.04775 14.5764757,4418.85375 L15.0004757,4418.62575 L23.4004757,4413.80175 C24.0234757,4413.43575 24.1914757,4412.60975 23.7604757,4412.02975 L15.0004757,4399.52575 Z"/></g></svg></div>
+              <div class="pm-label" style="color:#A78BFA;">Phase Lattice</div>
+              <div class="pm-hl">Sculpt<br>the phase.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--fg-faint);margin-top:8px;text-align:center;">Phase Lattice · phase_lattice</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Image usage rules ── -->
+  <div class="card">
+    <div class="card-title">Image Usage Rules</div>
+    <div class="img-rules">
+      <div class="img-rule-col">
+        <div class="img-rule do"><strong>Do</strong>Always match the image to the product's folder. Don't use a ZyloVerb ballet image for a Medrone post.</div>
+        <div class="img-rule do"><strong>Do</strong>Stack two overlays: dark base first (#000 at 45–60%), then product color tint (30–40%). This keeps contrast while letting color read.</div>
+        <div class="img-rule do"><strong>Do</strong>Let the image dominate. Type should be minimal — product name + one tagline line maximum on atmospheric posts.</div>
+        <div class="img-rule do"><strong>Do</strong>Use the ZYLO wordmark at low opacity (60–80%) on every post. It's always there, never loud.</div>
+      </div>
+      <div class="img-rule-col">
+        <div class="img-rule dont"><strong>Don't</strong>Don't over-tint. If the image is no longer readable through the overlay, the color is too heavy.</div>
+        <div class="img-rule dont"><strong>Don't</strong>Don't use images from 4_image_ref for product-specific posts — those are general brand atmosphere only.</div>
+        <div class="img-rule dont"><strong>Don't</strong>Don't add drop shadows, stroke outlines, or borders to images. Images bleed to the edge, always full-bleed.</div>
+        <div class="img-rule dont"><strong>Don't</strong>Don't mix two products in one image. One post, one product, one color.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Platform format table ── -->
+  <div class="card">
+    <div class="card-title">Platform Format Reference</div>
+    <table class="ptable">
+      <thead><tr><th>Platform</th><th>Primary Format</th><th>Ratios</th><th>Image Folder</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Instagram Grid</td><td>4:5 product · 1:1 brand</td><td>4:5 · 1:1</td><td>product_specific_images/</td><td>Product posts weekly. Atmosphere 2–3× week from general.</td></tr>
+        <tr><td>Instagram Reels</td><td>9:16 · full-screen</td><td>9:16</td><td>product_specific_images/</td><td>Plugin demo audio + full-bleed. No voiceover.</td></tr>
+        <tr><td>YouTube Thumbnail</td><td>16:9</td><td>16:9</td><td>product_specific_images/</td><td>Product image + name. High contrast. No busy backgrounds.</td></tr>
+        <tr><td>TikTok / Shorts</td><td>9:16 only</td><td>9:16</td><td>Either</td><td>Atmospheric B-roll + plugin patch as audio.</td></tr>
+        <tr><td>Twitter / X</td><td>16:9 attached or text-only</td><td>16:9 · text</td><td>zylo_general/</td><td>Brand-level only. No product chip. Copy-forward.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
+
+<!-- ─── 13 · SOCIAL POSTS ─── -->
+<section class="page-section" id="social-posts">
+  <div class="section-head">
+    <span class="section-num">13</span>
+    <span class="section-title">Social Post Library</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Brand Feed — Hero Posts</div>
+    <p>Brand-level posts use the ZYLO wordmark (not product chip), white accent bar, and neutral dark overlay. No product color tint. Copy is emotive, not functional.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;">
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:1/1;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_062dcc02-8dbe-4a0e-ab0b-d566fd3ee674.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,.18) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:12px;">
+          <div><svg viewBox="0 0 792 612" style="width:40px;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;margin-bottom:5px;">Zylo Instruments</div>
+            <div style="display:inline-block;width:18px;height:2px;border-radius:1px;background:white;margin-bottom:8px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:14px;line-height:1.1;color:white;margin-bottom:5px;">Sound<br>Finds Form.</div>
+            <div style="font-size:9px;font-weight:300;color:rgba(255,255,255,.6);line-height:1.5;">Instruments built for the textures between notes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:1/1;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_41315724-bd2e-4c9f-bfa9-71141e710845.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.1) 50%,rgba(0,0,0,0.85) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:12px;">
+          <div style="opacity:0.6;"><svg viewBox="0 0 140.15 140.76" style="width:16px;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg></div>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;">
+            <div style="font-family:var(--font-display);font-weight:800;font-size:13px;line-height:1.12;color:white;">"The space between notes is where music breathes."</div>
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;opacity:.35;margin-top:8px;">— Zylo Instruments</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:1/1;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_96c35bdf-b39d-456a-9fcc-95630489996d.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,.18) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:12px;">
+          <div><svg viewBox="0 0 792 612" style="width:40px;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg></div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;margin-bottom:5px;">New Release</div>
+            <div style="display:inline-block;width:18px;height:2px;border-radius:1px;background:white;margin-bottom:8px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:14px;line-height:1.1;color:white;margin-bottom:5px;">Craft the Atmosphere.</div>
+            <div style="font-size:9px;font-weight:300;color:rgba(255,255,255,.6);line-height:1.5;">Professional-grade software instruments for ambient, electronic &amp; cinematic production.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p style="font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);margin-top:12px;">Brand posts: ZYLO wordmark top-left · white accent bar · no product color tint · emotive copy · 1:1 square or 4:5</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Product Posts — Medrone · ZyloDelay · ZyloVerb · Orbit Weave</div>
+    <p>Product posts lead with the product chip (icon + name), product color tint overlay at 25–32%, ZYLO Z-mark or wordmark. Headline is punchy and product-specific.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px;">
+
+      <!-- Medrone -->
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:4/5;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_062dcc02-8dbe-4a0e-ab0b-d566fd3ee674.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(46,204,138,.28) 0%,rgba(0,0,0,0) 60%),linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.3) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:5px;padding:3px 8px 3px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);">
+              <svg viewBox="0 0 89.55 39.43" style="width:11px;;fill:#2ECC8A" xmlns="http://www.w3.org/2000/svg"><path d="M35.69,38.37l-1.71.06c-.92.03-1.75-.1-2.65-.31-2.45-.56-4.63-1.71-6.62-3.22l-1.08-.88-.79-.73-.97-1-.21-.74.69-.93c.77.12,1.42.39,2.09.72.53.26,1.07.39,1.64.53,2.2.54,4.48.56,6.62-.23,1.77-.65,3.33-1.54,4.73-2.82l.83-.77,1.38-1.45.97-1.17,2.08-3.16,1.84-3.47-3.1-4.95-1.14,2.22-.42.92-1.52,3-1.23,2.22-1.16,2.04-.78,1.53c-.18.36-.48.61-.86.62-.47.02-.81-.12-1.05-.52l-1-1.65-2.44-3.95-3.82-6.04-.95,1.5-1.94,3.22-.57.94-1.3,2.15-.84,1.48-.91,1.57-.57.94c-.17.28-.28.4-.59.49-.55.16-.95-.03-1.25-.51l-2.81-4.54-3.01-4.7-1.72-2.62-.45.68-.99,1.7-1.98,3.33-.58,1.04-.39.69-.55.93-.47.87-.81,1.42-.68,1.26c-.15.29-.42.57-.67.62-.32.06-.76-.07-.89-.37-.16-.38-.07-.82.13-1.16l3.75-6.54,3.36-5.78.65-.97c.22-.11.77-.13,1.01-.04.49.42.73,1,1.07,1.52l1.26,1.92,2,3.16,3.68,5.72,1.16-1.88,1.18-1.94,2.07-3.42.62-1.07,1.03-1.7.37-.7.49-.84c.13-.23.29-.49.53-.65.27-.18,1-.17,1.21.16l2.69,4.31.98,1.51,2.22,3.53,1.57,2.5.49-.81,2.04-3.64,2.09-4.2.96-1.97,1-1.92.58-1.02,1.73-2.53c.49-.71,1.03-1.39,1.65-1.99l.55-.53.79-.69.99-.71,1.62-.97.78-.37c1.36-.65,2.7-1.17,4.2-1.31l3.06-.29c1.42-.03,2.81.22,4.16.63l2.99,1.18c.56.22,1.03.54,1.52.89l1.67,1.16,1.27,1.14.96.93-.06.75-.37.63-.59.11-.65-.22c-1.45-.72-2.91-1.25-4.53-1.45-.72-.09-1.4-.17-2.11-.11-1.38.11-2.64.44-3.87,1l-.88.39c-1.38.62-2.58,1.5-3.72,2.49-1.01.86-1.85,1.79-2.63,2.87l-.13.11s-.07.03-.06,0l.05-.29c-.34.21-.63.65-.53,1.09l-.28.13c-.05.03-.03.18-.04.24l-.55.87-.38.63-.82,1.49-.32.13-.34.62,2.5,4.03.82,1.29.52-1.17.83-1.75.28-.71c.95-2.03,2-3.93,3.05-5.89l1.25-2.32c.12-.23.4-.44.61-.51s.77.03.91.25l1.56,2.51,2.51,4.05,2.45,3.93.93,1.32,2.18-3.68,3.7-6.4,1-1.75c.14-.25.59-.4.82-.38.31.02.64.29.81.56l.56.88.93,1.45.74,1.14,4.2,6.52.94,1.39.09.14s.09-.02.14-.09l.83-1.46,1.57-2.88,3.77-7.14c.21-.41.39-.73.91-.63.39.07.67.38.65.9,0,.42-.32.83-.51,1.2l-.92,1.77-1.99,3.76-.76,1.38-1.69,3.28-1.23,2.22c-.35.14-.81.15-1.16.05l-.37-.44-.65-1.03-.58-.92-1.98-3.09-1.74-2.7-1.68-2.58-.88-1.34-1.14,1.89-1.02,1.72-1.47,2.53-2.3,4.08-.62,1.06-.5.77c-.17.26-.63.27-.88.21-.35-.09-.48-.32-.68-.63l-2.4-3.8-2.03-3.3-2.72-4.3-2.79,5.2-3,6.74-.81,1.6-1.18,2.11c-.57,1.03-1.24,1.97-2.06,2.82l-.91.95-1.56,1.37c-1.28,1.13-4.33,2.63-5.94,2.95l-1.16.23-1.54.18Z"/></svg>
+              <span style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">Medrone</span>
+            </div>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;margin-bottom:4px;">Drone &amp; Organism</div>
+            <div style="display:inline-block;width:16px;height:2px;border-radius:1px;background:#2ECC8A;margin-bottom:6px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:12px;line-height:1.1;color:white;margin-bottom:4px;">Living Drone Synthesis.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZyloDelay -->
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:4/5;">
+        <img src="4_image_ref/ckadobe41_35mm_cinematic_film_still_of_a_minimalist_ambient_syn_aa85cbd6-ae5a-41b3-9009-1dc2ff8c01cb.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,190,120,.28) 0%,rgba(0,0,0,0) 60%),linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.3) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;gap:5px;padding:3px 8px 3px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);align-self:flex-start;">
+            <svg viewBox="0 -0.5 20 20" style="width:11px;fill:#FFBE78;" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-4,-3160)" fill-rule="evenodd"><path d="M14.0000871,3171.007 L13.9940871,3171 L8.00008712,3177.4 L9.49808712,3179 L14.0000871,3174.194 L18.5020871,3179 L20.0000871,3177.4 L14.0060871,3171 L14.0000871,3171.007 Z M12.6360871,3168.586 C13.4170871,3169.367 14.7560871,3169.294 15.4640871,3168.587 C16.1290871,3167.921 16.2530871,3166.543 15.3670871,3165.657 L15.3640871,3165.66 C14.5830871,3164.879 13.2430871,3164.952 12.5360871,3165.659 C11.8710871,3166.325 11.7470871,3167.703 12.6330871,3168.589 L12.6360871,3168.586 Z M9.80508712,3171.417 L11.2190871,3170.003 C9.80508712,3168.589 9.70608712,3165.657 11.1200871,3164.243 L9.70608712,3162.829 C7.58408712,3164.95 7.68308712,3169.296 9.80508712,3171.417 Z M8.29108712,3161.415 L6.87708712,3160 C2.63408712,3164.243 3.44108712,3170.71 6.97608712,3174.246 L8.39008712,3172.832 C5.56208712,3170.003 5.46308712,3164.243 8.29108712,3161.415 Z M16.8800871,3170.003 L18.2940871,3171.417 C20.4160871,3169.296 20.3170871,3164.95 18.1950871,3162.829 L16.7810871,3164.243 C18.1950871,3165.657 18.2940871,3168.589 16.8800871,3170.003 Z M21.1230871,3174.246 L19.7090871,3172.832 C22.5370871,3170.003 22.4380871,3164.243 19.6100871,3161.415 L21.0240871,3160 C24.5590871,3163.536 25.3650871,3170.003 21.1230871,3174.246 Z"/></g></svg>
+            <span style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">ZyloDelay</span>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.14em;text-transform:uppercase;opacity:.45;margin-bottom:4px;">Tape · Digital · Harmonic</div>
+            <div style="display:inline-block;width:16px;height:2px;border-radius:1px;background:#FFBE78;margin-bottom:6px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:12px;line-height:1.1;color:white;">Echo Has a Memory.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZyloVerb -->
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:4/5;">
+        <img src="4_image_ref/ckadobe41_35mm_poloriaoid_faded_photo_exterialor_dream_landscap_378c6a41-bcdc-4df3-ac56-750644f5f017.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(85,191,255,.25) 0%,rgba(0,0,0,0) 60%),linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.3) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;gap:5px;padding:3px 8px 3px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);align-self:flex-start;">
+            <svg viewBox="0 0 46.22 46.22" style="width:11px;fill:#55bfff;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M36.98,6.93c0-2.99,4.62-3.12,4.62,0s-4.62,3.11-4.62,0M23.11,41.6c-10.19,0-18.49-8.29-18.49-18.49S12.92,4.62,23.11,4.62c3.38,0,6.54.93,9.26,2.51.11,3.66,3.05,6.6,6.71,6.71,1.59,2.73,2.51,5.89,2.51,9.26,0,10.19-8.29,18.49-18.49,18.49M46.22,6.93c0-3.83-3.1-6.93-6.93-6.93-2.21,0-4.16,1.05-5.42,2.66-3.21-1.69-6.87-2.66-10.75-2.66C10.35,0,0,10.35,0,23.11s10.35,23.11,23.11,23.11,23.11-10.35,23.11-23.11c0-3.88-.97-7.54-2.66-10.75,1.61-1.27,2.66-3.21,2.66-5.42M23.11,30.04c-3.82,0-6.93-3.11-6.93-6.93s3.11-6.93,6.93-6.93,6.93,3.11,6.93,6.93-3.11,6.93-6.93,6.93M23.11,11.55c-6.38,0-11.55,5.17-11.55,11.55s5.17,11.55,11.55,11.55,11.55-5.17,11.55-11.55-5.17-11.55-11.55-11.55"/></svg>
+            <span style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">ZyloVerb</span>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="display:inline-block;width:16px;height:2px;border-radius:1px;background:#55bfff;margin-bottom:6px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:12px;line-height:1.1;color:white;">Space Is an Instrument.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orbit Weave -->
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:4/5;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_40e658ae-bdb1-48f0-b0e3-dd13f6596342.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(216,203,180,.25) 0%,rgba(0,0,0,0) 60%),linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.3) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;gap:5px;padding:3px 8px 3px 6px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);align-self:flex-start;">
+            <svg viewBox="0 0 48.04 48.04" style="width:11px;fill:#d8cbb4;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.43,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M26.42,45.64c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M21.62,2.4c0-1.33,1.08-2.4,2.4-2.4s2.4,1.08,2.4,2.4-1.08,2.4-2.4,2.4-2.4-1.08-2.4-2.4M10.43,37.61c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M41.01,7.04c.94.94.94,2.46,0,3.4-.47.47-1.08.7-1.7.7s-1.23-.23-1.7-.7c-.94-.94-.94-2.46,0-3.4.47-.47,1.08-.7,1.7-.7s1.23.24,1.7.7M48.04,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M4.8,24.02c0,1.33-1.08,2.4-2.4,2.4s-2.4-1.08-2.4-2.4,1.08-2.4,2.4-2.4,2.4,1.08,2.4,2.4M24.02,28.83c-2.65,0-4.8-2.15-4.8-4.8s2.15-4.8,4.8-4.8,4.8,2.15,4.8,4.8-2.15,4.8-4.8,4.8M24.02,14.41c-5.31,0-9.61,4.3-9.61,9.61s4.3,9.61,9.61,9.61,9.61-4.3,9.61-9.61-4.3-9.61-9.61-9.61"/></svg>
+            <span style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">Orbit Weave</span>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="display:inline-block;width:16px;height:2px;border-radius:1px;background:#d8cbb4;margin-bottom:6px;"></div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:12px;line-height:1.1;color:white;">Motion. Rhythm. Space.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Reels &amp; Story Covers — 9:16</div>
+    <p>Vertical format for Instagram Reels and Stories. Same logo/chip system, scaled for tall crop. Headlines are shorter and larger. Typography-forward treatments work especially well in story format.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:20px;">
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_3cd0dcda-2821-460a-b943-360e4e6d39e8.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,.18) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <svg viewBox="0 0 792 612" style="width:32px;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.12em;opacity:.5;text-transform:uppercase;margin-bottom:5px;">Reel</div>
+            <div style="font-family:var(--font-display);font-weight:800;font-size:11px;line-height:1.1;color:white;">5 Sounds You Can't Make Without ZyloDelay</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_3e7619cb-9769-438c-afc9-8a60a35ccd02.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.9) 0%,rgba(46,204,138,.2) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;gap:5px;padding:3px 7px 3px 5px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);align-self:flex-start;">
+            <svg viewBox="0 0 89.55 39.43" style="width:10px;;fill:#2ECC8A" xmlns="http://www.w3.org/2000/svg"><path d="M35.69,38.37l-1.71.06c-.92.03-1.75-.1-2.65-.31-2.45-.56-4.63-1.71-6.62-3.22l-1.08-.88-.79-.73-.97-1-.21-.74.69-.93c.77.12,1.42.39,2.09.72.53.26,1.07.39,1.64.53,2.2.54,4.48.56,6.62-.23,1.77-.65,3.33-1.54,4.73-2.82l.83-.77,1.38-1.45.97-1.17,2.08-3.16,1.84-3.47-3.1-4.95-1.14,2.22-.42.92-1.52,3-1.23,2.22-1.16,2.04-.78,1.53c-.18.36-.48.61-.86.62-.47.02-.81-.12-1.05-.52l-1-1.65-2.44-3.95-3.82-6.04-.95,1.5-1.94,3.22-.57.94-1.3,2.15-.84,1.48-.91,1.57-.57.94c-.17.28-.28.4-.59.49-.55.16-.95-.03-1.25-.51l-2.81-4.54-3.01-4.7-1.72-2.62-.45.68-.99,1.7-1.98,3.33-.58,1.04-.39.69-.55.93-.47.87-.81,1.42-.68,1.26c-.15.29-.42.57-.67.62-.32.06-.76-.07-.89-.37-.16-.38-.07-.82.13-1.16l3.75-6.54,3.36-5.78.65-.97c.22-.11.77-.13,1.01-.04.49.42.73,1,1.07,1.52l1.26,1.92,2,3.16,3.68,5.72,1.16-1.88,1.18-1.94,2.07-3.42.62-1.07,1.03-1.7.37-.7.49-.84c.13-.23.29-.49.53-.65.27-.18,1-.17,1.21.16l2.69,4.31.98,1.51,2.22,3.53,1.57,2.5.49-.81,2.04-3.64,2.09-4.2.96-1.97,1-1.92.58-1.02,1.73-2.53c.49-.71,1.03-1.39,1.65-1.99l.55-.53.79-.69.99-.71,1.62-.97.78-.37c1.36-.65,2.7-1.17,4.2-1.31l3.06-.29c1.42-.03,2.81.22,4.16.63l2.99,1.18c.56.22,1.03.54,1.52.89l1.67,1.16,1.27,1.14.96.93-.06.75-.37.63-.59.11-.65-.22c-1.45-.72-2.91-1.25-4.53-1.45-.72-.09-1.4-.17-2.11-.11-1.38.11-2.64.44-3.87,1l-.88.39c-1.38.62-2.58,1.5-3.72,2.49-1.01.86-1.85,1.79-2.63,2.87l-.13.11s-.07.03-.06,0l.05-.29c-.34.21-.63.65-.53,1.09l-.28.13c-.05.03-.03.18-.04.24l-.55.87-.38.63-.82,1.49-.32.13-.34.62,2.5,4.03.82,1.29.52-1.17.83-1.75.28-.71c.95-2.03,2-3.93,3.05-5.89l1.25-2.32c.12-.23.4-.44.61-.51s.77.03.91.25l1.56,2.51,2.51,4.05,2.45,3.93.93,1.32,2.18-3.68,3.7-6.4,1-1.75c.14-.25.59-.4.82-.38.31.02.64.29.81.56l.56.88.93,1.45.74,1.14,4.2,6.52.94,1.39.09.14s.09-.02.14-.09l.83-1.46,1.57-2.88,3.77-7.14c.21-.41.39-.73.91-.63.39.07.67.38.65.9,0,.42-.32.83-.51,1.2l-.92,1.77-1.99,3.76-.76,1.38-1.69,3.28-1.23,2.22c-.35.14-.81.15-1.16.05l-.37-.44-.65-1.03-.58-.92-1.98-3.09-1.74-2.7-1.68-2.58-.88-1.34-1.14,1.89-1.02,1.72-1.47,2.53-2.3,4.08-.62,1.06-.5.77c-.17.26-.63.27-.88.21-.35-.09-.48-.32-.68-.63l-2.4-3.8-2.03-3.3-2.72-4.3-2.79,5.2-3,6.74-.81,1.6-1.18,2.11c-.57,1.03-1.24,1.97-2.06,2.82l-.91.95-1.56,1.37c-1.28,1.13-4.33,2.63-5.94,2.95l-1.16.23-1.54.18Z"/></svg>
+            <span style="font-family:var(--font-mono);font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">Medrone</span>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-display);font-weight:800;font-size:11px;line-height:1.1;color:white;">Building Evolving Drones in Ableton</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:4px;">Tutorial series. No experience needed.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_2e7c7b71-c617-427b-bf7d-3a78dce2b250.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,.18) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;text-align:center;">
+          <div style="font-family:var(--font-display);font-weight:800;font-size:18px;line-height:1.1;color:white;">Free<br>this week.</div>
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:.12em;opacity:.5;margin-top:8px;text-transform:uppercase;">Limited Offer</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:14px;">ZyloDelay free trial — no credit card.</div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_3e7619cb-9769-438c-afc9-8a60a35ccd02.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(85,191,255,.25) 0%,rgba(0,0,0,0) 60%),linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.3) 100%);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:10px;">
+          <div style="display:flex;align-items:center;gap:5px;padding:3px 7px 3px 5px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);align-self:flex-start;">
+            <svg viewBox="0 0 46.22 46.22" style="width:10px;fill:#55bfff;" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M36.98,6.93c0-2.99,4.62-3.12,4.62,0s-4.62,3.11-4.62,0M23.11,41.6c-10.19,0-18.49-8.29-18.49-18.49S12.92,4.62,23.11,4.62c3.38,0,6.54.93,9.26,2.51.11,3.66,3.05,6.6,6.71,6.71,1.59,2.73,2.51,5.89,2.51,9.26,0,10.19-8.29,18.49-18.49,18.49M46.22,6.93c0-3.83-3.1-6.93-6.93-6.93-2.21,0-4.16,1.05-5.42,2.66-3.21-1.69-6.87-2.66-10.75-2.66C10.35,0,0,10.35,0,23.11s10.35,23.11,23.11,23.11,23.11-10.35,23.11-23.11c0-3.88-.97-7.54-2.66-10.75,1.61-1.27,2.66-3.21,2.66-5.42M23.11,30.04c-3.82,0-6.93-3.11-6.93-6.93s3.11-6.93,6.93-6.93,6.93,3.11,6.93,6.93-3.11,6.93-6.93,6.93M23.11,11.55c-6.38,0-11.55,5.17-11.55,11.55s5.17,11.55,11.55,11.55,11.55-5.17,11.55-11.55-5.17-11.55-11.55-11.55"/></svg>
+            <span style="font-family:var(--font-mono);font-size:6px;letter-spacing:.1em;text-transform:uppercase;color:white;opacity:.85;">ZyloVerb</span>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-family:var(--font-display);font-weight:800;font-size:11px;line-height:1.1;color:#55bfff;">The Reverb That Doesn't Sound Like Reverb.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="position:relative;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;">
+        <img src="4_image_ref/ckadobe41_65mm_poloriaoid_faded_photo_exterialor_dream_landscap_2d44f2ba-fcc2-4d54-9bd5-07c0a06cf379.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" alt="">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;text-align:center;">
+          <div style="opacity:0.6;margin-bottom:18px;"><svg viewBox="0 0 140.15 140.76" style="width:14px;fill:white;display:block;" xmlns="http://www.w3.org/2000/svg"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg></div>
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14px;line-height:1.12;color:white;">"Not a plugin.<br>A perspective."</div>
+          <div style="width:24px;height:1px;background:rgba(255,255,255,.3);margin:12px auto;"></div>
+          <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:.1em;text-transform:uppercase;opacity:.35;">Zylo Instruments</div>
+        </div>
+      </div>
+
+    </div>
+    <p style="font-family:var(--font-mono);font-size:10px;color:var(--fg-faint);margin-top:12px;">Full post library: <a href="instagram_posts.html" style="color:var(--fg-muted);">instagram_posts.html</a> · All 7 categories incl. Facebook ads, atmospheric posts, and story covers</p>
+  </div>
+
+</section>
+
+<!-- ─── 14 · MOTION ─── -->
+<section class="page-section" id="motion">
+  <div class="section-head">
+    <span class="section-num">14</span>
+    <span class="section-title">Motion &amp; Video</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Animation Principles</div>
+    <p>Zylo moves like its plugins sound — slow, deliberate, atmospheric. Nothing bounces. Nothing zooms. Every frame breathes.</p>
+    <div class="motion-list" style="margin-top:20px;">
+      <div class="motion-item"><div class="m-icon">▶</div><div><div class="m-title">Product Intro — 15–30 seconds</div><div class="m-desc">Open black → wordmark fades in → cut to plugin UI or ferrofluid footage → product name + tagline sequentially → hold on wordmark + URL. No voiceover. Plugin audio only.</div></div><div class="m-tag">Product</div></div>
+      <div class="motion-item"><div class="m-icon">⏶</div><div><div class="m-title">Transitions</div><div class="m-desc">Cuts or 400–800ms cross-fades only. No slides, wipes, kinetic text, or zoom transitions.</div></div><div class="m-tag">Rule</div></div>
+      <div class="motion-item"><div class="m-icon">♩</div><div><div class="m-title">Audio in Video</div><div class="m-desc">Always a Zylo plugin patch as soundtrack. Every video is also a product demo. No royalty-free beds. No silence. The sound is the brand.</div></div><div class="m-tag">Rule</div></div>
+      <div class="motion-item"><div class="m-icon">✕</div><div><div class="m-title">Never Do</div><div class="m-desc">No glitch effects, chromatic aberration, VHS treatment, or grain overlays. No fast cuts. No motion blur on type. No trending audio from other artists.</div></div><div class="m-tag">Restriction</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weekly Content Cadence</div>
+    <div class="cadence-row">
+      <div class="cadence-cell"><div class="cadence-num">2–3×</div><div class="cadence-unit">per week</div><div class="cadence-type">Atmosphere</div><div class="cadence-desc">Template B or ambient clip. No CTA. Feeds algorithm. Brand presence without selling.</div></div>
+      <div class="cadence-cell"><div class="cadence-num">1×</div><div class="cadence-unit">per week</div><div class="cadence-type">Product</div><div class="cadence-desc">Template A static or product intro video. Drive to site. Link in bio.</div></div>
+      <div class="cadence-cell"><div class="cadence-num">2×</div><div class="cadence-unit">per month</div><div class="cadence-type">Demo / Tutorial</div><div class="cadence-desc">Long-form YouTube. Sound design walkthrough. Cut for Reels/Shorts.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 13 · PRINCIPLES ─── -->
+<section class="page-section" id="principles">
+  <div class="section-head">
+    <span class="section-num">15</span>
+    <span class="section-title">Design Principles</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Core Principles</div>
+    <div class="principles">
+      <div class="principle"><div class="principle-name">Recessive</div><p>The interface disappears when you work. Dark surfaces, restrained contrast, nothing competing with the audio.</p></div>
+      <div class="principle"><div class="principle-name">Atmospheric</div><p>Evoke sensation over specification. Name the feeling — not the spec sheet.</p></div>
+      <div class="principle"><div class="principle-name">Precise</div><p>2px buttons. 11px labels. One sentence that lands beats a paragraph. Everything as tight as it can be.</p></div>
+      <div class="principle"><div class="principle-name">Confident</div><p>No exclamation marks. No superlatives. State things plainly — the work speaks for itself.</p></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer" style="margin-top:60px;">
+    <svg viewBox="0 0 554.38 144.99" xmlns="http://www.w3.org/2000/svg" style="width:80px;height:auto;color:rgba(255,255,255,0.10);">
+      <g><polygon fill="currentColor" points="411.48 113.03 411.45 143.15 319.1 143.14 319.09 2.31 353.27 2.26 353.26 113.01 411.48 113.03"/><path fill="currentColor" d="M554.38,72.5c0,40.04-32.46,72.5-72.5,72.5s-72.5-32.46-72.5-72.5S441.85,0,481.88,0s72.5,32.46,72.5,72.5ZM520.92,72.57c0-21.56-17.48-39.04-39.04-39.04s-39.04,17.48-39.04,39.04,17.48,39.04,39.04,39.04,39.04-17.48,39.04-39.04Z"/></g>
+      <g><polygon fill="currentColor" points="137.08 113.63 137.19 143.14 2.05 143.13 61.61 83.28 18.15 83.05 40.71 60.04 67.91 32.46 0 32.32 .03 2.38 140.15 2.39 105.9 37.69 83.72 60.8 128.52 60.95 120.56 68.83 75.6 113.57 137.08 113.63"/><polygon fill="currentColor" points="245.54 91.23 209.42 143.17 168.45 143.06 211.14 83.09 187.88 51.65 150.61 2.4 195.23 2.34 230.45 50.6 265.16 2.37 307.87 2.39 245.54 91.23"/></g>
+    </svg>
+    <div class="footer-txt">ZYLO Instruments — Brand Guide 3.0<br>2025 — zyloinstruments.com — Confidential</div>
+  </div>
+</section>
+
+<!-- ─── 16 · MERCH & APPAREL ─── -->
+<section class="page-section" id="merch">
+  <div class="section-head">
+    <span class="section-num">16</span>
+    <span class="section-title">Merch &amp; Apparel</span>
+  </div>
+
+  <!-- Hero photo strip — 5 shots -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:3px;border-radius:var(--r-panel);overflow:hidden;margin-bottom:20px;">
+
+    <!-- Shot 1: Z-mark icon tee, women's — dark moody -->
+    <div style="position:relative;aspect-ratio:3/4;overflow:hidden;background:#0d0d0d;">
+      <img src="merch/tee-icon-womens.jpg" alt="Z-mark icon tee — women's" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.75) 100%);pointer-events:none;"></div>
+      <div style="position:absolute;bottom:14px;left:12px;">
+        <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);">Z-Mark Tee · Left Chest</div>
+      </div>
+    </div>
+
+    <!-- Shot 2: ZYLO wordmark tee-dress, rooftop golden hour -->
+    <div style="position:relative;aspect-ratio:3/4;overflow:hidden;background:#141414;">
+      <img src="merch/tee-wordmark-womens.jpg" alt="ZYLO wordmark tee" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.75) 100%);pointer-events:none;"></div>
+      <div style="position:absolute;bottom:14px;left:12px;">
+        <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);">Wordmark Tee · Center Front</div>
+      </div>
+    </div>
+
+    <!-- Shot 3: Medrone waveform tee, men's -->
+    <div style="position:relative;aspect-ratio:3/4;overflow:hidden;background:#111;">
+      <img src="merch/tee-medrone-mens.jpg" alt="Medrone tee — men's" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.75) 100%);pointer-events:none;"></div>
+      <div style="position:absolute;bottom:14px;left:12px;">
+        <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);">Medrone Tee · Left Chest</div>
+      </div>
+    </div>
+
+    <!-- Shot 4: Medrone distressed cap -->
+    <div style="position:relative;aspect-ratio:3/4;overflow:hidden;background:#0a0a0a;">
+      <img src="merch/cap-medrone.jpg" alt="Medrone cap" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.75) 100%);pointer-events:none;"></div>
+      <div style="position:absolute;bottom:14px;left:12px;">
+        <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);">Medrone Cap · Distressed</div>
+      </div>
+    </div>
+
+    <!-- Shot 5: Tote bag -->
+    <div style="position:relative;aspect-ratio:3/4;overflow:hidden;background:#080808;">
+      <img src="merch/tote-medrone.jpg" alt="Medrone tote bag" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 55%,rgba(0,0,0,0.75) 100%);pointer-events:none;"></div>
+      <div style="position:absolute;bottom:14px;left:12px;">
+        <div style="font-family:var(--font-mono);font-size:7px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);">Tote · Medrone Mark</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Merch philosophy -->
+  <div class="card">
+    <div class="card-title">Merch Philosophy</div>
+    <p>Zylo apparel is minimal, dark, and wearable by anyone who makes music — not a walking ad. Every piece should look like it belongs on a record label, not a software company. Black garments only. White or product-color print only. No gradients, no illustrations, no photography on the garment itself.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;">
+      <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;">
+        <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--fg);margin-bottom:8px;">Left Chest Icon</div>
+        <div style="font-size:12px;color:var(--fg-muted);line-height:1.65;">Product icon at ~2.5cm. White only. No product color on black garments — the icon reads through tone, not hue.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;">
+        <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--fg);margin-bottom:8px;">Center Wordmark</div>
+        <div style="font-size:12px;color:var(--fg-muted);line-height:1.65;">ZYLO wordmark at ~18cm wide. Full chest. Statement piece. The tee-dress treatment — oversized, clean, confident.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;">
+        <div style="font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--fg);margin-bottom:8px;">Back Text</div>
+        <div style="font-size:12px;color:var(--fg-muted);line-height:1.65;">Optional: product tagline or "zyloinstruments.com" in IBM Plex Mono, 9pt, centered at neck. Low key. No shouting.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approved marks for merch -->
+  <div class="card">
+    <div class="card-title">Approved Marks for Apparel</div>
+    <p>Only these marks go on garments. No modified versions, no color fills on dark fabric.</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:20px;">
+
+      <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <svg viewBox="0 0 792 612" style="width:80%;fill:white;opacity:0.85;" xmlns="http://www.w3.org/2000/svg"><path d="M62.42,398.55v-30.94l101.8-118.46h-98.63v-35.7h150.98v30.94l-101.8,118.46h101.8v35.7H62.42Z"/><path d="M417.65,398.55v-185.09h40.72v148.07h92.28v37.02h-133Z"/><path d="M651.01,401.72c-57.12,0-98.1-42.57-98.1-95.19v-.53c0-52.62,41.51-95.72,98.63-95.72s98.1,42.57,98.1,95.19v.53c0,52.62-41.51,95.72-98.63,95.72ZM707.07,306c0-31.73-23.27-58.17-56.06-58.17s-55.53,25.91-55.53,57.64v.53c0,31.73,23.27,58.17,56.06,58.17s55.53-25.91,55.53-57.64v-.53Z"/><polygon points="360.68 213.46 406.95 213.46 287.5 398.55 241.7 398.55 360.68 213.46"/><polygon points="315.38 261.66 286.73 213.45 239.13 213.45 292.57 297.68 315.38 261.66"/></svg>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);text-align:center;">ZYLO Wordmark</div>
+      </div>
+
+      <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <svg viewBox="0 0 140.15 140.76" style="width:52%;fill:white;opacity:0.85;" xmlns="http://www.w3.org/2000/svg"><polygon points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);text-align:center;">Z Mark</div>
+      </div>
+
+      <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <svg viewBox="0 0 89.55 39.43" style="width:88%;opacity:0.85;;fill:white" xmlns="http://www.w3.org/2000/svg"><path d="M35.69,38.37l-1.71.06c-.92.03-1.75-.1-2.65-.31-2.45-.56-4.63-1.71-6.62-3.22l-1.08-.88-.79-.73-.97-1-.21-.74.69-.93c.77.12,1.42.39,2.09.72.53.26,1.07.39,1.64.53,2.2.54,4.48.56,6.62-.23,1.77-.65,3.33-1.54,4.73-2.82l.83-.77,1.38-1.45.97-1.17,2.08-3.16,1.84-3.47-3.1-4.95-1.14,2.22-.42.92-1.52,3-1.23,2.22-1.16,2.04-.78,1.53c-.18.36-.48.61-.86.62-.47.02-.81-.12-1.05-.52l-1-1.65-2.44-3.95-3.82-6.04-.95,1.5-1.94,3.22-.57.94-1.3,2.15-.84,1.48-.91,1.57-.57.94c-.17.28-.28.4-.59.49-.55.16-.95-.03-1.25-.51l-2.81-4.54-3.01-4.7-1.72-2.62-.45.68-.99,1.7-1.98,3.33-.58,1.04-.39.69-.55.93-.47.87-.81,1.42-.68,1.26c-.15.29-.42.57-.67.62-.32.06-.76-.07-.89-.37-.16-.38-.07-.82.13-1.16l3.75-6.54,3.36-5.78.65-.97c.22-.11.77-.13,1.01-.04.49.42.73,1,1.07,1.52l1.26,1.92,2,3.16,3.68,5.72,1.16-1.88,1.18-1.94,2.07-3.42.62-1.07,1.03-1.7.37-.7.49-.84c.13-.23.29-.49.53-.65.27-.18,1-.17,1.21.16l2.69,4.31.98,1.51,2.22,3.53,1.57,2.5.49-.81,2.04-3.64,2.09-4.2.96-1.97,1-1.92.58-1.02,1.73-2.53c.49-.71,1.03-1.39,1.65-1.99l.55-.53.79-.69.99-.71,1.62-.97.78-.37c1.36-.65,2.7-1.17,4.2-1.31l3.06-.29c1.42-.03,2.81.22,4.16.63l2.99,1.18c.56.22,1.03.54,1.52.89l1.67,1.16,1.27,1.14.96.93-.06.75-.37.63-.59.11-.65-.22c-1.45-.72-2.91-1.25-4.53-1.45-.72-.09-1.4-.17-2.11-.11-1.38.11-2.64.44-3.87,1l-.88.39c-1.38.62-2.58,1.5-3.72,2.49-1.01.86-1.85,1.79-2.63,2.87l-.13.11s-.07.03-.06,0l.05-.29c-.34.21-.63.65-.53,1.09l-.28.13c-.05.03-.03.18-.04.24l-.55.87-.38.63-.82,1.49-.32.13-.34.62,2.5,4.03.82,1.29.52-1.17.83-1.75.28-.71c.95-2.03,2-3.93,3.05-5.89l1.25-2.32c.12-.23.4-.44.61-.51s.77.03.91.25l1.56,2.51,2.51,4.05,2.45,3.93.93,1.32,2.18-3.68,3.7-6.4,1-1.75c.14-.25.59-.4.82-.38.31.02.64.29.81.56l.56.88.93,1.45.74,1.14,4.2,6.52.94,1.39.09.14s.09-.02.14-.09l.83-1.46,1.57-2.88,3.77-7.14c.21-.41.39-.73.91-.63.39.07.67.38.65.9,0,.42-.32.83-.51,1.2l-.92,1.77-1.99,3.76-.76,1.38-1.69,3.28-1.23,2.22c-.35.14-.81.15-1.16.05l-.37-.44-.65-1.03-.58-.92-1.98-3.09-1.74-2.7-1.68-2.58-.88-1.34-1.14,1.89-1.02,1.72-1.47,2.53-2.3,4.08-.62,1.06-.5.77c-.17.26-.63.27-.88.21-.35-.09-.48-.32-.68-.63l-2.4-3.8-2.03-3.3-2.72-4.3-2.79,5.2-3,6.74-.81,1.6-1.18,2.11c-.57,1.03-1.24,1.97-2.06,2.82l-.91.95-1.56,1.37c-1.28,1.13-4.33,2.63-5.94,2.95l-1.16.23-1.54.18Z"/></svg>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);text-align:center;">Medrone Icon</div>
+      </div>
+
+      <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <svg viewBox="0 -0.5 20 20" style="width:52%;fill:white;opacity:0.85;" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-4,-3160)" fill-rule="evenodd"><path d="M14.0000871,3171.007 L13.9940871,3171 L8.00008712,3177.4 L9.49808712,3179 L14.0000871,3174.194 L18.5020871,3179 L20.0000871,3177.4 L14.0060871,3171 L14.0000871,3171.007 Z M12.6360871,3168.586 C13.4170871,3169.367 14.7560871,3169.294 15.4640871,3168.587 C16.1290871,3167.921 16.2530871,3166.543 15.3670871,3165.657 L15.3640871,3165.66 C14.5830871,3164.879 13.2430871,3164.952 12.5360871,3165.659 C11.8710871,3166.325 11.7470871,3167.703 12.6330871,3168.589 L12.6360871,3168.586 Z M9.80508712,3171.417 L11.2190871,3170.003 C9.80508712,3168.589 9.70608712,3165.657 11.1200871,3164.243 L9.70608712,3162.829 C7.58408712,3164.95 7.68308712,3169.296 9.80508712,3171.417 Z M8.29108712,3161.415 L6.87708712,3160 C2.63408712,3164.243 3.44108712,3170.71 6.97608712,3174.246 L8.39008712,3172.832 C5.56208712,3170.003 5.46308712,3164.243 8.29108712,3161.415 Z M16.8800871,3170.003 L18.2940871,3171.417 C20.4160871,3169.296 20.3170871,3164.95 18.1950871,3162.829 L16.7810871,3164.243 C18.1950871,3165.657 18.2940871,3168.589 16.8800871,3170.003 Z M21.1230871,3174.246 L19.7090871,3172.832 C22.5370871,3170.003 22.4380871,3164.243 19.6100871,3161.415 L21.0240871,3160 C24.5590871,3163.536 25.3650871,3170.003 21.1230871,3174.246 Z"/></g></svg>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);text-align:center;">ZyloDelay Icon</div>
+      </div>
+
+      <div style="background:#111;border:1px solid rgba(255,255,255,0.07);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <svg viewBox="0 0 20 20" style="width:52%;fill:white;opacity:0.85;" xmlns="http://www.w3.org/2000/svg"><g transform="translate(-4,-4399)" fill-rule="evenodd"><path d="M6.70247571,4412.07175 L12.0994757,4404.08575 C12.3864757,4403.69975 13.0004757,4403.90275 13.0004757,4404.38375 L13.0004757,4415.43475 C13.0004757,4415.82075 12.5804757,4416.06175 12.2474757,4415.86675 L6.85047571,4412.80175 C6.59347571,4412.65075 6.52447571,4412.31075 6.70247571,4412.07175 Z M21.1494757,4412.80175 L15.7534757,4415.86675 C15.4194757,4416.06175 15.0004757,4415.82075 15.0004757,4415.43475 L15.0004757,4404.38375 C15.0004757,4403.90275 15.6134757,4403.69975 15.9014757,4404.08575 L21.2984757,4412.07175 C21.4754757,4412.31075 21.4064757,4412.65075 21.1494757,4412.80175 Z M15.0004757,4399.52575 C14.5184757,4398.82475 13.4824757,4398.82475 13.0004757,4399.52575 L4.24047571,4412.02975 C3.80847571,4412.60975 3.97647571,4413.43575 4.60047571,4413.80175 L13.0004757,4418.62575 L13.4234757,4418.85375 C13.7834757,4419.04775 14.2164757,4419.04775 14.5764757,4418.85375 L15.0004757,4418.62575 L23.4004757,4413.80175 C24.0234757,4413.43575 24.1914757,4412.60975 23.7604757,4412.02975 L15.0004757,4399.52575 Z"/></g></svg>
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);text-align:center;">Phase Lattice Icon</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div class="card">
+    <div class="card-title">Apparel Rules</div>
+    <div class="img-rules">
+      <div class="img-rule-col">
+        <div class="img-rule do"><strong>Do</strong>Black garments only. Faded black, washed black, charcoal — all fine. The garment is the canvas.</div>
+        <div class="img-rule do"><strong>Do</strong>White print only for standard drops. Single-color screen print or embroidery. No pantone fills.</div>
+        <div class="img-rule do"><strong>Do</strong>Keep placement architectural: left chest at ~2.5cm, center front at ~18cm wide, back neck text at ~9cm wide.</div>
+      </div>
+      <div class="img-rule-col">
+        <div class="img-rule dont"><strong>Don't</strong>No color fills on the garment — not even product accent colors. That's for digital. Apparel stays tonal.</div>
+        <div class="img-rule dont"><strong>Don't</strong>No full-back graphics, no allover prints, no photographic imagery on the garment itself.</div>
+        <div class="img-rule dont"><strong>Don't</strong>Don't put multiple icons on the same piece. One mark, one placement, per garment.</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:var(--r-card);">
+      <span style="font-family:var(--font-mono);font-size:9px;color:var(--fg-faint);">Merch assets in <code>merch/</code> — tee (icon) · tee (wordmark) · tee (Medrone) · cap · notebook · tote</span>
+    </div>
+  </div>
+
+</section>
+
+</main>
+
+<script>
+// Lightweight client-side gate for static hosting.
+(function () {
+  const sessionKey = 'zylo-brand-guide-access';
+  const login = document.querySelector('[data-brand-login]');
+  const form = document.querySelector('[data-brand-login-form]');
+  const error = document.querySelector('[data-brand-login-error]');
+
+  function unlock() {
+    document.body.classList.remove('brand-guide-locked');
+    if (login) login.hidden = true;
+  }
+
+  if (sessionStorage.getItem(sessionKey) === 'granted') {
+    unlock();
+  }
+
+  form?.addEventListener('submit', event => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const username = String(formData.get('username') || '').trim();
+    const password = String(formData.get('password') || '');
+
+    if (username === 'ck' && password === '2026') {
+      sessionStorage.setItem(sessionKey, 'granted');
+      unlock();
+      return;
+    }
+
+    if (error) error.textContent = 'Incorrect username or password.';
+  });
+})();
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('.page-section');
+const links    = document.querySelectorAll('.nav-link');
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const id = entry.target.id;
+      const active = document.querySelector(`.nav-link[href="#${id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.25 });
+
+sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
