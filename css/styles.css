@@ -1704,13 +1704,13 @@ h3 { font-size: 1.25rem; }
 /* ── About Page ───────────────────────────────────────────── */
 .about-page {
   background:
-    radial-gradient(circle at 18% 12%, rgba(81, 255, 211, 0.08), transparent 30%),
-    radial-gradient(circle at 82% 42%, rgba(255, 255, 255, 0.045), transparent 26%),
+    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.055), transparent 28%),
+    radial-gradient(circle at 78% 44%, rgba(81, 255, 211, 0.055), transparent 24%),
     var(--bg);
 }
 
 .about-hero {
-  min-height: 72vh;
+  min-height: 76vh;
   position: relative;
   display: flex;
   align-items: flex-end;
@@ -1727,14 +1727,14 @@ h3 { font-size: 1.25rem; }
 .about-hero-bg {
   background-size: cover;
   background-position: center;
-  opacity: 0.88;
-  filter: saturate(0.85) contrast(1.04);
+  opacity: 0.72;
+  filter: saturate(0.72) contrast(1.08);
 }
 
 .about-hero-overlay {
   background:
-    linear-gradient(90deg, rgba(10,10,10,0.92), rgba(10,10,10,0.42) 52%, rgba(10,10,10,0.82)),
-    linear-gradient(0deg, rgba(10,10,10,0.95), rgba(10,10,10,0.12) 52%, rgba(10,10,10,0.72));
+    linear-gradient(90deg, rgba(10,10,10,0.94), rgba(10,10,10,0.48) 58%, rgba(10,10,10,0.84)),
+    linear-gradient(0deg, rgba(10,10,10,0.96), rgba(10,10,10,0.16) 54%, rgba(10,10,10,0.78));
 }
 
 .about-hero-content {
@@ -1745,13 +1745,13 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-hero-content h1 {
-  max-width: 900px;
-  font-size: clamp(2.8rem, 7vw, 6.6rem);
+  max-width: 940px;
+  font-size: clamp(2.8rem, 6.4vw, 6rem);
   margin: 16px 0 22px;
 }
 
 .about-hero-content p:not(.label) {
-  max-width: 620px;
+  max-width: 660px;
   color: rgba(255,255,255,0.72);
   font-size: clamp(1rem, 1.4vw, 1.18rem);
 }
@@ -1761,7 +1761,8 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-statement-grid,
-.about-makers-grid {
+.about-makers-grid,
+.about-philosophy-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 80px;
@@ -1778,12 +1779,23 @@ h3 { font-size: 1.25rem; }
   flex-direction: column;
   gap: 24px;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 1.02rem;
   line-height: 1.8;
 }
 
-.about-principles {
+.about-what,
+.about-philosophy {
   border-bottom: 1px solid var(--border);
+}
+
+.about-section-heading {
+  max-width: 620px;
+  margin-bottom: 32px;
+}
+
+.about-section-heading h2 {
+  margin-top: 12px;
+  font-size: clamp(1.9rem, 3.4vw, 3.1rem);
 }
 
 .about-card-grid {
@@ -1796,10 +1808,10 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-card {
-  min-height: 320px;
+  min-height: 340px;
   padding: 34px;
   background:
-    linear-gradient(145deg, rgba(255,255,255,0.035), transparent 55%),
+    linear-gradient(145deg, rgba(255,255,255,0.045), transparent 55%),
     #101010;
   display: flex;
   flex-direction: column;
@@ -1808,8 +1820,9 @@ h3 { font-size: 1.25rem; }
 .about-card span {
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem;
-  color: rgba(92, 226, 190, 0.8);
+  color: rgba(255,255,255,0.48);
   letter-spacing: 0.12em;
+  text-transform: uppercase;
   margin-bottom: auto;
 }
 
@@ -1827,6 +1840,36 @@ h3 { font-size: 1.25rem; }
 
 .about-makers {
   border-bottom: 1px solid var(--border);
+}
+
+.about-principle-list {
+  border-top: 1px solid var(--border);
+}
+
+.about-principle {
+  display: grid;
+  grid-template-columns: 44px minmax(130px, 0.34fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+
+.about-principle span {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.72rem;
+  color: var(--very-muted);
+  letter-spacing: 0.12em;
+}
+
+.about-principle h3 {
+  font-size: 1rem;
+}
+
+.about-principle p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.75;
 }
 
 .about-panel {
@@ -2115,7 +2158,8 @@ h3 { font-size: 1.25rem; }
   }
 
   .about-statement-grid,
-  .about-makers-grid {
+  .about-makers-grid,
+  .about-philosophy-grid {
     grid-template-columns: 1fr;
     gap: 40px;
   }
@@ -2204,6 +2248,15 @@ h3 { font-size: 1.25rem; }
   .about-panel {
     padding: 28px;
   }
+
+  .about-principle {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px 18px;
+  }
+
+  .about-principle p {
+    grid-column: 2;
+  }
 }
 
 @media (max-width: 520px) {
@@ -2259,6 +2312,15 @@ h3 { font-size: 1.25rem; }
 
   .about-card {
     min-height: 260px;
+  }
+
+  .about-principle {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .about-principle p {
+    grid-column: auto;
   }
 
   .about-cta .hero-actions {
