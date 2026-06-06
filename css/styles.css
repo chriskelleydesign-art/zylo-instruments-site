@@ -1837,11 +1837,11 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-product-icon {
-  --icon-size: 70px;
+  --icon-size: 54px;
   display: block;
   width: var(--icon-size);
   height: var(--icon-size);
-  color: rgba(255,255,255,0.82);
+  color: rgba(255,255,255,0.42);
   background-color: currentColor;
   opacity: 0.94;
   -webkit-mask: var(--product-icon) center / contain no-repeat;
@@ -1849,26 +1849,22 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-product-icon-medrone {
-  --icon-size: 92px;
+  --icon-size: 70px;
   --product-icon: url('../images/product-icons/medrone.svg');
-  color: #42d2a5;
 }
 
 .about-product-icon-orbit {
   --product-icon: url('../images/product-icons/orbit-weave.svg');
-  color: #d8cbb4;
 }
 
 .about-product-icon-zyloverb {
-  --icon-size: 62px;
+  --icon-size: 48px;
   --product-icon: url('../images/product-icons/zyloverb.svg');
-  color: #55bfff;
 }
 
 .about-product-icon-zylodelay {
-  --icon-size: 62px;
+  --icon-size: 48px;
   --product-icon: url('../images/product-icons/zylodelay.svg');
-  color: #f3ad30;
 }
 
 .about-card h2 {
