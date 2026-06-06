@@ -1806,7 +1806,7 @@ h3 { font-size: 1.25rem; }
 }
 
 .about-card {
-  min-height: 340px;
+  min-height: 370px;
   padding: 34px;
   background:
     linear-gradient(145deg, rgba(255,255,255,0.045), transparent 55%),
@@ -1815,18 +1815,65 @@ h3 { font-size: 1.25rem; }
   flex-direction: column;
 }
 
-.about-card span {
+.about-card-label {
   font-family: 'Syne', sans-serif;
   font-size: 0.72rem;
   color: rgba(255,255,255,0.48);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: auto;
+}
+
+.about-card-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+  margin-top: auto;
+  margin-bottom: 28px;
+}
+
+.about-card-icons-pair {
+  gap: 18px;
+}
+
+.about-product-icon {
+  --icon-size: 70px;
+  display: block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  color: rgba(255,255,255,0.82);
+  background-color: currentColor;
+  opacity: 0.94;
+  -webkit-mask: var(--product-icon) center / contain no-repeat;
+  mask: var(--product-icon) center / contain no-repeat;
+}
+
+.about-product-icon-medrone {
+  --icon-size: 92px;
+  --product-icon: url('../images/product-icons/medrone.svg');
+  color: #42d2a5;
+}
+
+.about-product-icon-orbit {
+  --product-icon: url('../images/product-icons/orbit-weave.svg');
+  color: #d8cbb4;
+}
+
+.about-product-icon-zyloverb {
+  --icon-size: 62px;
+  --product-icon: url('../images/product-icons/zyloverb.svg');
+  color: #55bfff;
+}
+
+.about-product-icon-zylodelay {
+  --icon-size: 62px;
+  --product-icon: url('../images/product-icons/zylodelay.svg');
+  color: #f3ad30;
 }
 
 .about-card h2 {
   font-size: clamp(1.35rem, 2vw, 2rem);
-  margin: 34px 0 16px;
+  margin: 0 0 16px;
 }
 
 .about-card p,
