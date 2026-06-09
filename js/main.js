@@ -217,7 +217,11 @@
 
   function stopActive() {
     if (!active) return;
-    active.nodes.forEach(node => {
+    if (active.audio) {
+      active.audio.pause();
+      active.audio.currentTime = 0;
+    }
+    active.nodes?.forEach(node => {
       try { node.stop && node.stop(); } catch (_) {}
       try { node.disconnect && node.disconnect(); } catch (_) {}
     });
@@ -227,6 +231,36 @@
     const fill = active.row.querySelector('.audio-sample-fill');
     if (fill) fill.style.width = '0%';
     active = null;
+  }
+
+  function formatSampleTime(seconds) {
+    if (!Number.isFinite(seconds)) return '0:00';
+    const total = Math.round(seconds);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function playAudioFile(row) {
+    const audio = new Audio(row.dataset.audioSrc);
+    const fill = row.querySelector('.audio-sample-fill');
+    const button = row.querySelector('.audio-sample-play');
+    const duration = row.querySelector('.audio-sample-duration');
+
+    button?.classList.add('playing');
+
+    audio.addEventListener('loadedmetadata', () => {
+      if (duration) duration.textContent = formatSampleTime(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (!fill || !audio.duration) return;
+      fill.style.width = `${Math.min((audio.currentTime / audio.duration) * 100, 100)}%`;
+    });
+
+    audio.addEventListener('ended', stopActive);
+    audio.play().catch(() => stopActive());
+    active = { row, audio };
   }
 
   function tone(ac, type, freq, start, dur, dest, gainValue, detuneCents) {
@@ -419,6 +453,10 @@
       const isPlaying = row.querySelector('.audio-sample-play')?.classList.contains('playing');
       stopActive();
       if (isPlaying) return;
+      if (row.dataset.audioSrc) {
+        playAudioFile(row);
+        return;
+      }
       const ac = getContext();
       if (ac.state === 'suspended') await ac.resume();
       playDemo(row.dataset.synthDemo, row);
