@@ -1638,16 +1638,6 @@ h3 { font-size: 1.25rem; }
   margin-left: 4px;
 }
 
-.product-video-caption {
-  position: absolute;
-  left: 18px;
-  bottom: 16px;
-  color: rgba(255,255,255,0.84);
-  font-family: 'Syne', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
 /* Also Like section */
 .also-like-grid {
   display: grid;
