@@ -640,6 +640,62 @@ h3 { font-size: 1.25rem; }
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Generative Experience Feature ────────────────────────── */
+.alpenglow-feature {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 24% 16%, rgba(255, 157, 138, 0.10), transparent 32%),
+    radial-gradient(circle at 78% 72%, rgba(160, 230, 220, 0.08), transparent 30%),
+    #080808;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.alpenglow-feature::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 50%, #000, transparent 70%);
+}
+
+.alpenglow-feature-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 300px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 40px;
+}
+
+.alpenglow-feature-copy {
+  max-width: 660px;
+}
+
+.alpenglow-feature .label {
+  color: rgba(255, 157, 138, 0.72);
+  margin-bottom: 16px;
+}
+
+.alpenglow-feature h2 {
+  font-size: clamp(2.6rem, 6vw, 5.7rem);
+  line-height: 0.95;
+  margin-bottom: 18px;
+}
+
+.alpenglow-feature p:not(.label) {
+  color: var(--muted);
+  font-size: clamp(1rem, 1.5vw, 1.18rem);
+  line-height: 1.8;
+}
+
 /* ── Newsletter ───────────────────────────────────────────── */
 .newsletter {
   background: #0a0a0a;
@@ -2348,6 +2404,11 @@ h3 { font-size: 1.25rem; }
   .about-principle p {
     grid-column: 2;
   }
+
+  .alpenglow-feature-inner {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
 
 @media (max-width: 520px) {
@@ -2423,6 +2484,16 @@ h3 { font-size: 1.25rem; }
   }
 
   .hero-actions { flex-direction: column; gap: 14px; }
+
+  .alpenglow-feature-inner {
+    min-height: 360px;
+    gap: 28px;
+  }
+
+  .alpenglow-feature .btn {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 /* ── Misc helpers ─────────────────────────────────────────── */
