@@ -1581,7 +1581,11 @@ void main(){
     // DISPLACED wave surface — so it engages exactly when the crossing is
     // visible, never early on a trough or late on a crest.
     float camHS = uCamY - uWaterSurfY;
-    float camSub = clamp(-camHS * 3.0, 0.0, 1.0);
+    // dead zone to 0.08 m: uWaterSurfY carries ~±0.3 m of estimate error at the
+    // skin, and this term at 60% strength painted distant terrain teal on
+    // crossing frames that were visually above water. Geometry (plane backface,
+    // meniscus) owns the skin; this volumetric fog earns in by ~0.55 m of depth.
+    float camSub = smoothstep(0.08, 0.55, -camHS);
     if (camSub > 0.001) {
       float upY = vRel.y / max(vDist, 0.001);
       // soft total-internal-reflection: below ~8° elevation a submerged ray
@@ -2331,8 +2335,18 @@ void main(){
   // surfacing is clean the instant the eye is out, no lingering tint possible.
   float eyeH = uCamY - uWaterSurfY;                 // <0 = eye under the visible surface
   float pixH = eyeH + d.y * 0.35;                   // near-plane sample height vs surface
+  // Soft waterline: fade the underwater volume in over a wide band, not a razor
+  // line, so the sky→water boundary reads as a gradient and never a hard seam.
   float subCover = (uWaterSurfY > -1.0e8) ? (1.0 - smoothstep(0.0, 0.045, pixH)) : 0.0;
-  subCover *= 1.0 - smoothstep(0.0, 0.30, eyeH);    // belt+braces: dead above the surface
+  // ERROR-TOLERANT SKIN: uWaterSurfY is a CPU estimate of the rendered mesh —
+  // wave-phase-dependent residual error runs to ~±0.3 m, and any sky fog fired
+  // while the eye is visually airborne reads as "teal flashes on the crossing".
+  // So the underwater mix EARNS its strength over the first ~0.45 m of real
+  // depth: exactly 0 until 2 cm under the estimate, full by ~0.5 m. Inside the
+  // error band the sky stays sky and the rendered water-plane backface
+  // (pixel-exact geometry) owns the transition. NEVER widen the pixH band
+  // above 0 to "soften" the line — softening bleeds teal onto open sky.
+  subCover *= smoothstep(0.02, 0.45, -eyeH);
   if (subCover > 0.001 && sb < 0.35) {
     float uw = subCover;
     float depth01 = clamp(uUnderwaterDepth / 130.0, 0.0, 1.0);
@@ -2354,8 +2368,14 @@ void main(){
     waterBg = mix(waterBg, fogSurf, upView * (0.40 + 0.50 * nearSurface));
     float snell = pow(clamp(y, 0.0, 1.0), 3.5) * (0.4 + 0.6 * nearSurface);
     waterBg += (uSunCol * 0.55 + vec3(0.18, 0.36, 0.42)) * snell * (0.12 + surfaceSheen * 0.55);
-    waterBg *= 0.50 + 0.50 * upView;            // darken toward the deep below
-    col = mix(col, waterBg, uw * 0.995);
+    waterBg *= 0.64 + 0.36 * upView;            // gentler darkening toward the deep
+    // Keep the real sky (clouds) VISIBLE through the water near the surface —
+    // index-style — and only sink it into an opaque dark volume with DEPTH. So
+    // "coming out" reads as the sky lightening through the water, never a flat
+    // dark wall. Fully fogged by ~14 m, so the deep look is unchanged.
+    float surfSky = 1.0 - smoothstep(0.0, 14.0, uUnderwaterDepth);
+    float fogOpacity = uw * mix(0.985, 0.52, surfSky);
+    col = mix(col, waterBg, fogOpacity);
 
     vec2 drift = vec2(uTime * 0.018, -uTime * 0.011) + uCamXZ * 0.00005;
     vec2 p1 = vNdc * vec2(1.55, 1.0) + drift;
@@ -4207,20 +4227,26 @@ function frame() {
     const climbRate = 90 * Math.max(1, S.camY / 250) * (lowG ? 0.62 : 1);         // exponential-feel ascent
     // climb / dive with W-S (or arrows) — works with autopilot ON or OFF; the
     // rate is boosted near the waterline so you can dive in / climb out easily
+    // index-parity: NO waterline boosts. The old downBoost ramped the commanded
+    // descent to 3.4× right as you reached the surface — that acceleration WAS
+    // the "thrusted down into the water" feel. One uniform rate everywhere;
+    // water changes only the RESPONSE softness (drag), never the command.
     if (keys['ArrowUp'] || keys['w']) {
-      const upBoost = 1.0 + 1.6 * smoothstep(60, -60, S.altitude);
-      S.altitude = Math.min(120000, S.altitude + climbRate * upBoost * dt);
+      S.altitude = Math.min(120000, S.altitude + climbRate * dt);
       if (S.altitude >= 25) altKnob.set(S.altitude, false);
       S.lastInput = now;
     }
     if (keys['ArrowDown'] || keys['s']) {
-      const downBoost = 1.0 + 2.4 * smoothstep(140, -40, S.altitude);
-      S.altitude = Math.max(-520, S.altitude - climbRate * downBoost * dt);
+      S.altitude = Math.max(-520, S.altitude - climbRate * dt);
       if (S.altitude >= 25) altKnob.set(S.altitude, false);
       S.lastInput = now;
     }
     if (S.auto && keys.Space) {
-      const rocketRate = climbRate * (S.camY > 8000 ? 7.5 : 3.8);
+      // underwater damp: full rocket from 52 m deep ejected the craft in half a
+      // second. Through water the target climbs at ~40% rate, blending back to
+      // full over the first meters above — ascent stays eager but swims out.
+      const swimUp = 1 - 0.6 * Math.min(1, S.underwater || 0);
+      const rocketRate = climbRate * (S.camY > 8000 ? 7.5 : 3.8) * swimUp;
       S.altitude = Math.min(180000, S.altitude + rocketRate * dt);
       if (S.altitude >= 25) altKnob.set(S.altitude, false);
     }
@@ -4296,12 +4322,11 @@ function frame() {
     const nearProbe = 14 + S.effSpd * 0.9;
     const seabedHere = Math.max(rawHere,
       terrainRaw(S.x + Math.sin(S.hdg) * nearProbe, S.z + Math.cos(S.hdg) * nearProbe));
-    const floor_ = overWater ? (S.auto
-      // cruise clearance is 16 m, but a dive command — or already being deep —
-      // lets autopilot settle all the way to the floor (the +16 clamp was why
-      // the seabed was unreachable with autopilot on)
-      ? seabed + ((diveCommand || S.camY < seabed + 15) ? 3.0 : 16)
-      : seabedHere + 2.2)
+    // index-parity: constant small seabed clearance in autopilot (index uses
+    // ground+5 flat). The old conditional 16 m ↔ 3 m clearance sprang the
+    // craft back up when you released a dive near the bottom — the floor is
+    // simply always reachable now.
+    const floor_ = overWater ? (S.auto ? seabed + 3.0 : seabedHere + 2.2)
                              : Math.max(tHere, tAhead) + 26;
     const aboveGnd = S.camY - Math.max(overWater ? seabed : tHere, 0);
     const wpT = overWater * Math.min(1, Math.max(0, (170 - aboveGnd) / 130));
@@ -4347,13 +4372,21 @@ function frame() {
     S._wasBelow = isBelow;
     S.waterCross = (S.waterCross || 0) * Math.exp(-dt * 2.6);   // decays over ~0.5 s: a deliberate crossfade, not a hard flash
     S.underwaterDepth = overWater ? Math.max(0, surfHere - S.camY) : 0;
+    // ── PHYSICS reads the FLAT plane, never the waves ─────────────────────────
+    // waterDelta (displaced) is for the RENDER-side latch only. S.underwater
+    // feeds drag, gravity, speed caps, and yaw inertia — when its target read
+    // the displaced delta, every swell rolling under the craft pulsed those
+    // forces (capDn surged 145→~40 and back each wave: the "super-jerky
+    // descent"). Flat depth is monotonic in camY, so movement stays as smooth
+    // through the surface as any other vertical move.
+    const waterDeltaPhys = overWater ? (wl - S.camY) : -1e9;
     const trans = UW.waterlineTransitionSmoothness;
-    const targetUnderwater = overWater ? smoothstep(-0.35 * trans, 0.35 + trans, waterDelta) : 0;
+    const targetUnderwater = overWater ? smoothstep(-0.35 * trans, 0.35 + trans, waterDeltaPhys) : 0;
     S.underwater += (targetUnderwater - S.underwater) * (1 - Math.exp(-dt * (7.0 / Math.max(0.15, trans))));
     if (targetUnderwater <= 0.001 && S.underwater < 0.02) S.underwater = 0;
     S.submerged = S.waterRenderBelow || S.underwater > 0.24;
-    S.nearSurface = overWater ? 1.0 - Math.min(1, Math.abs(waterDelta) / 10.0) : 0;
-    const maskTarget = overWater ? Math.max(S.waterCross || 0, 1.0 - Math.min(1, Math.abs(waterDelta) / (2.35 + trans * 0.8))) : 0;
+    S.nearSurface = overWater ? 1.0 - Math.min(1, Math.abs(waterDeltaPhys) / 10.0) : 0;
+    const maskTarget = overWater ? Math.max(S.waterCross || 0, 1.0 - Math.min(1, Math.abs(waterDeltaPhys) / (2.35 + trans * 0.8))) : 0;
     S.waterlineMask += (maskTarget - (S.waterlineMask || 0)) * (1 - Math.exp(-dt * 10.0 / Math.max(0.25, trans)));
     const prevY = S.camY;
     if (S.auto) {
@@ -4373,7 +4406,7 @@ function frame() {
         // bob fades out within ~2 m of the surface so it can never drag the
         // camera back and forth across the submerged-state band
         target += Math.sin(now * 0.38 + S.x * 0.0008) * 0.65 * S.underwater
-                * smoothstep(0.9, 2.0, waterDelta);
+                * smoothstep(0.9, 2.0, waterDeltaPhys);
       // ── water skimming: when the commanded altitude sits in the glide band
       // just above the surface, lock onto a low deck over the swell instead
       // of bouncing on idle drift — deliberate low flight becomes a smooth,
@@ -4382,15 +4415,32 @@ function frame() {
           S.altitude > wl - 2 && S.altitude < wl + 16 && S.camY > wl) {
         target = wl + 5.5 + Math.sin(now * 0.5 + S.x * 0.0006) * 0.45;
       }
-      // snappy approach but rate-capped: big commands become a cinematic climb, not a teleport
-      const waterDrag = 1 + S.underwater * 3.1;
-      const capUp = (keys.Space ? 520 : 130) * Math.max(1, S.camY / 200) / (1 + S.underwater * 1.05) * (lowG ? 0.82 : 1);
-      const capDn = (diveCommand ? 145 : 60) * Math.max(1, Math.max(S.camY, 80) / 380) / waterDrag * (lowG ? 0.38 : 1);
-      let step = (target - S.camY) * Math.min(1, dt * (lowG ? 1.15 : 2.4));
-      step = Math.min(capUp * dt, Math.max(-capDn * dt, step));
-      if (overWater) step *= 1 - 0.15 * (S.nearSurface || 0);
-      S.camY += step;
-      S.vertVel = step / Math.max(dt, 0.001);
+      // index-parity vertical: ONE exponential chase toward the target with ONE
+      // drag constant that eases 2.4 (air) → 1.6 (water) on the smooth ramp.
+      // No rate caps vs boosts fighting each other, no waterDrag divisor, no
+      // near-surface damping — the old stack surged then hit a wall at the
+      // waterline ("thrusted down"). Velocity is continuous everywhere; water
+      // reads as a softer RESPONSE, exactly how index does it. A single
+      // generous rate cap remains only so a huge knob jump is a cinematic
+      // climb, not a teleport — it never binds during key/drag descents.
+      const chase = (lowG ? 1.15 : 2.4) - 0.8 * Math.min(1, S.underwater || 0);
+      let step = (target - S.camY) * Math.min(1, dt * chase);
+      const maxRate = (keys.Space ? 520 : 170) * Math.max(1, S.camY / 200) * (lowG ? 0.82 : 1);
+      step = Math.min(maxRate * dt, Math.max(-maxRate * dt, step));
+      // ── vertical ACCELERATION limiter ────────────────────────────────────
+      // The chase target can jump (dive-glide clamp engaging at wl+4, skim
+      // lock breaking, knob jumps): measured 57 m/s of velocity change in ONE
+      // frame at the waterline — the "brake wall / thrust" feel. Velocity is
+      // now allowed to change by at most A per second, so every such jump
+      // becomes a short smooth ramp. Position, velocity AND acceleration stay
+      // bounded — nothing the targets do can jolt the camera again.
+      const A = 240;
+      const vWant = step / Math.max(dt, 0.001);
+      const vPrev = S.vertVel || 0;
+      const vNew = vWant > vPrev ? Math.min(vWant, vPrev + A * dt)
+                                 : Math.max(vWant, vPrev - A * dt);
+      S.camY += vNew * dt;
+      S.vertVel = vNew;
     } else {
       const manualSwim = S.underwater > 0.18 ? S.underwater : 0;
       const grav = (lowG ? 10.5 : 34.0) * (1.0 - manualSwim * 0.72);
@@ -4692,10 +4742,12 @@ function frame() {
   // crossing. Keep only a thin, low-opacity near-plane band (within ~0.9 m of
   // the surface) to soften the exact slice moment, capped well below a "flash".
   const wlV = S.planet.land.waterLvl;
+  // the band div is TEAL-TINTED (rgba(110,180,195)) — with the old ±0.9 m range
+  // it sat visibly on the open sky for a beat after every breach. Tight and
+  // asymmetric now: gone by 0.3 m above the surface, dimmer overall.
   const bandV = (S.mode === 'terrain' && wlV > -1e5 && (S.waterProx || 0) > 0.01)
-    ? Math.max(0, 1 - Math.abs(uwSurfEye - S.camY) / 0.9) : 0;
-  // slimmer now that the rendered meniscus owns the waterline edge
-  document.getElementById('waterline').style.opacity = String(Math.min(0.26, bandV * 0.26));
+    ? Math.max(0, 1 - Math.abs(uwSurfEye - S.camY) / (S.camY > uwSurfEye ? 0.3 : 0.55)) : 0;
+  document.getElementById('waterline').style.opacity = String(Math.min(0.16, bandV * 0.16));
   // Surface-crossing crossfade: bloom driven by the crossing pulse (S.waterCross),
   // scaled by the Crossfade slider and eased down away from the surface so a deep
   // dive never washes. Reads as an intentional "breaking the surface" beat.
@@ -5111,7 +5163,7 @@ function frame() {
       // nearly gone (~0.1), so removing it swaps two almost identical frames —
       // the "sky glitches from teal to normal" pop was this alpha (≈0.35)
       // vanishing in one frame. Full ceiling returns by ~1.5 m down.
-      const ceilIn = 0.10 + 0.90 * Math.min(1, Math.max(0, (S.underwaterDepth || 0) - 0.12) / 1.4);
+      const ceilIn = 0.04 + 0.96 * Math.min(1, Math.max(0, (S.underwaterDepth || 0) - 0.12) / 1.4);
       gl.uniform1f(WU.uAlpha, Math.min(1, (0.55 + uwGeom * 0.5) * ceilIn * UW.surfaceCeilingOpacity));
       gl.uniform1f(WU.uWobble, UW.wobble);
       gl.uniform1f(WU.uMenThick, UW.menThickness);
@@ -5203,7 +5255,7 @@ function frame() {
   // through crests ("haze flash on the way out") and the latched flag could
   // hold it while airborne. Neither can paint an above-water frame now.
   if (S.mode === 'terrain' && S.planet.land.waterLvl > -1e5 &&
-      uwGeom > 0.01 && (UW.hazeOverlay > 0.005 || UW.lightShaftIntensity > 0.005)) {
+      uwGeom > 0.05 && (UW.hazeOverlay > 0.005 || UW.lightShaftIntensity > 0.005)) {
     gl.disable(gl.DEPTH_TEST);
     gl.useProgram(uwPostProg);
     gl.uniform2f(UPU.uResolution, W, H);
