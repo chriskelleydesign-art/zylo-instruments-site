@@ -51,7 +51,8 @@ body.zen .hud, body.zen #deck { opacity: 0; pointer-events: none; }
 #ro-mode { color: var(--alpen) !important; }
 
 #hud-nav { bottom: 156px; left: 26px; display: flex; flex-direction: column; gap: 4px; }
-.nav-row { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: rgba(255,255,255,0.42); }
+.nav-row { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: rgba(255,255,255,0.42);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
 .nav-row b { color: rgba(255,255,255,0.8); font-weight: 500; }
 .nav-row.aim b { color: var(--alpen); }
 .nav-head { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.26); margin-bottom: 2px; }
@@ -98,8 +99,18 @@ body.zen .hud, body.zen #deck { opacity: 0; pointer-events: none; }
    slice — no white, low opacity, so submerging/rising never flashes. */
 #waterline { position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity 0.08s ease;
   background:
-    linear-gradient(180deg, rgba(120,175,190,0.0) 44%, rgba(110,180,195,0.10) 50%, rgba(30,95,115,0.10) 56%, rgba(10,45,65,0.0) 100%);
+    linear-gradient(180deg, rgba(110,150,200,0.0) 44%, rgba(96,150,205,0.10) 50%, rgba(24,74,124,0.11) 56%, rgba(8,38,68,0.0) 100%);
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+/* Surface-crossing crossfade: a brief water-toned bloom that blooms up on every
+   true waterline crossing (both directions), so breaking the surface reads as a
+   deliberate cinematic beat instead of a hard state flip. Opacity is driven each
+   frame from S.waterCross × the Crossfade slider; screen-blended so it lifts and
+   tints rather than darkens. Sits above the world, below the HUD. */
+#crossfade { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(158,208,255,0.34), transparent 60%),
+    linear-gradient(180deg, rgba(120,178,228,0.16) 0%, rgba(70,132,196,0.10) 46%, rgba(16,54,104,0.22) 100%);
+  mix-blend-mode: screen; will-change: opacity; }
 @keyframes underwaterShafts {
   from { transform: translate3d(-2%, -1%, 0) rotate(-1deg); }
   to { transform: translate3d(3%, 2%, 0) rotate(1deg); }
@@ -188,6 +199,28 @@ body.zen .hud, body.zen #deck { opacity: 0; pointer-events: none; }
 body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
 #zen-exit:hover { opacity: 1 !important; }
 
+/* Mobile thruster button — line-art circle, off to the left, out of the way.
+   Hidden on pointer-fine (desktop uses ⌘); shown on touch / narrow screens.
+   The whole glyph is currentColor, so :active/.pressed recolours ring + chevrons
+   to the accent and adds a soft bloom for a clear on-press state. */
+#thruster { position: fixed; left: 16px; bottom: calc(50% - 31px); z-index: 60;
+  width: 62px; height: 62px; padding: 0; border: none; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(6,10,18,0.24); color: rgba(255,255,255,0.48);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: color 0.16s ease, background 0.16s ease, transform 0.1s ease, box-shadow 0.16s ease; }
+#thruster svg { width: 66%; height: 66%; display: block; }
+#thruster.pressed { color: var(--alpen); background: rgba(255,157,138,0.16);
+  box-shadow: 0 0 26px rgba(255,157,138,0.45), inset 0 0 14px rgba(255,157,138,0.22);
+  transform: scale(0.93); }
+/* Shown on any touch device (phone or iPad, portrait OR landscape). Gated on the
+   JS-set body.touch class — keyed off touch CAPABILITY (any-pointer:coarse /
+   maxTouchPoints), not the primary pointer, so an iPad with a trackpad/keyboard
+   (which reports pointer:fine) still gets it. */
+body.touch #thruster { display: flex; }
+
 @media (max-width: 1100px) {
   #deck { transform: translateX(-50%) scale(0.82); transform-origin: bottom center; }
 }
@@ -197,6 +230,21 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
 @media (max-width: 640px) {
   #hint { bottom: 108px; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* Touch: the Nav list is the phone/tablet warp control (no R key), so it must be
+   reachable in ANY orientation — the bottom-left desktop spot hides behind the
+   deck sheet on phones. Move it to the upper-right (clear of the deck AND the
+   left thruster) and fatten each planet into a comfortable double-tap button.
+   Gated on body.touch so iPad landscape (wide + touch) gets it too. */
+body.touch #hud-nav { top: 206px; right: 12px; bottom: auto; left: auto; z-index: 30;
+  align-items: flex-end; text-align: right; gap: 0; max-width: 64vw; }
+body.touch .nav-head { text-align: right; }
+body.touch .nav-row { font-size: 11px; padding: 9px 12px; margin: 2px 0; min-width: 128px;
+  border: 1px solid rgba(255,255,255,0.10); border-radius: var(--r-sharp);
+  background: rgba(6,10,18,0.32); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+body.touch .nav-row.aim { border-color: rgba(255,157,138,0.45); background: rgba(255,157,138,0.10); }
+/* iPad landscape is short: if the top HUD is tight, keep the nav a touch higher */
+@media (max-height: 560px) { body.touch #hud-nav { top: 150px; } }
 
 /* ══════════ MOBILE: deck collapses into tappable dropdown sections ══════════ */
 @media (max-width: 680px) {
@@ -269,6 +317,7 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
 
 <div id="toast"></div>
 <div id="waterline"></div>
+<div id="crossfade"></div>
 <div id="music-panel">
   <div class="music-field">
     <label for="music-key">Key</label>
@@ -305,6 +354,8 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
   <div class="uw-row"><label for="uw-causticIntensity">Caustics</label><input id="uw-causticIntensity" data-uw="causticIntensity" type="range" min="0" max="2" step="0.01"><output></output></div>
   <div class="uw-row"><label for="uw-causticScale">C Scale</label><input id="uw-causticScale" data-uw="causticScale" type="range" min="0.25" max="2.5" step="0.01"><output></output></div>
   <div class="uw-row"><label for="uw-waterlineTransitionSmoothness">Crossing</label><input id="uw-waterlineTransitionSmoothness" data-uw="waterlineTransitionSmoothness" type="range" min="0.15" max="2" step="0.01"><output></output></div>
+  <div class="uw-row"><label for="uw-menThickness">Surf Thick</label><input id="uw-menThickness" data-uw="menThickness" type="range" min="0" max="2.5" step="0.02"><output></output></div>
+  <div class="uw-row"><label for="uw-crossfade">Crossfade</label><input id="uw-crossfade" data-uw="crossfade" type="range" min="0" max="1.5" step="0.02"><output></output></div>
   <div class="uw-row"><label for="uw-wobble">Wobble</label><input id="uw-wobble" data-uw="wobble" type="range" min="0" max="2.5" step="0.02"><output></output></div>
   <div class="uw-row"><label for="uw-particleSize">P Size</label><input id="uw-particleSize" data-uw="particleSize" type="range" min="0.2" max="3" step="0.02"><output></output></div>
   <div class="uw-row"><label for="uw-ceilPatch">Ceil Patch</label><input id="uw-ceilPatch" data-uw="ceilPatch" type="range" min="0.3" max="3" step="0.02"><output></output></div>
@@ -350,6 +401,16 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
 </div>
 
 <button id="zen-exit" title="exit zen">◍</button>
+
+<!-- Mobile thruster: hold to thrust forward (mirrors ⌘). Line-art circle, tucked
+     out of the way on the left edge; lights up on press. -->
+<button id="thruster" aria-label="thruster" title="hold to thrust">
+  <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="20" stroke="currentColor" stroke-width="1.3"/>
+    <path d="M13.5 25.5 L22 16.5 L30.5 25.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M13.5 30.5 L22 21.5 L30.5 30.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+  </svg>
+</button>
 
 <div id="start">
   <div class="start-card">
@@ -524,6 +585,12 @@ const UW = {
   causticIntensity: 1.08,
   causticScale: 1.12,
   waterlineTransitionSmoothness: 0.86,
+  // thickness of the waterline "slab" edge (scales the two-tone meniscus band on
+  // both the top surface and the underside ceiling). 0 = thin plane, 1 = default.
+  menThickness: 1.0,
+  // intentional surface-crossing crossfade: a brief water-toned bloom on every
+  // true waterline crossing so the transition reads as a deliberate beat. 0 = off.
+  crossfade: 0.6,
   // underwater refraction wobble (scales the TERR_VS/WSURF_VS shimmer)
   wobble: 1.0,
   // suspended-particle look
@@ -964,6 +1031,7 @@ uniform vec2 uSeed;
 uniform float uFogDen, uSnowLine, uTime, uNight, uAscent, uFarFade, uWaterLvl, uUnderwater, uUnderwaterDepth, uBioStir, uCity, uSub;
 uniform float uWaterSurfY;   // DISPLACED wave height at the camera (-1e9 in the reflection pass)
 uniform float uUnderwaterStrength, uUnderwaterFogDensity, uCausticIntensity, uCausticScale;
+uniform float uMenThick;   // waterline slab thickness (Water panel: Surf Thick)
 uniform float uFoamAmt, uRipple;   // live wave controls: whitecap coverage + fine detail
 // NOTE: uWaveStr / uWaveChop are already declared by the injected GERSTNER_GLSL
 // below, so they must NOT be re-declared here (would be a GLSL redefinition).
@@ -1255,7 +1323,7 @@ void main(){
       float window = smoothstep(0.50, 0.80, rim);
       float rimLine = 1.0 - smoothstep(0.018, 0.125, abs(rim - 0.63));
       vec3 through = mix(uHor, uZen, 0.68) * 3.05 + uSunCol * 0.42;
-      vec3 mirror = uWaterCol * vec3(0.12, 0.38, 0.46);
+      vec3 mirror = uWaterCol * vec3(0.13, 0.33, 0.50);
       vec3 ceil_ = mix(mirror * 1.05, through * vec3(0.80, 1.00, 1.10), window * 0.75);
       ceil_ += mix(uHor, uSunCol, 0.34) * rimLine * (0.34 + 0.62 * dfade);
       vec3 sunRefB = normalize(vec3(uSunDirW.x, max(uSunDirW.y, 0.10) + 0.55, uSunDirW.z));
@@ -1278,12 +1346,23 @@ void main(){
     // ending in a raw clipped edge. Only lives while the camera is near the
     // waterline; vVz is the same forward-depth metric the clip uses.
     {
-      float camNearWl = 1.0 - smoothstep(2.0, 6.0, abs(uCamY - uWaterLvl));
-      float men = smoothstep(5.4, 4.45, vVz) * camNearWl;
-      if (men > 0.002) {
-        // dark water edge: the surface reads as a shadowed lip against the lens
-        vec3 menCol = uWaterCol * vec3(0.055, 0.10, 0.13);
-        col = mix(col, menCol, men * 0.78);
+      float camNearWl = 1.0 - smoothstep(2.5, 7.0, abs(uCamY - uWaterLvl));
+      // ── thick-slab waterline: instead of a 1-unit hairline the surface wears
+      // a TALL dark lip at the near-plane cut so the water reads as a solid body
+      // with real thickness facing the lens (the "two planes with a dark edge"
+      // look). A wide translucent BODY band + a darker LEADING EDGE right at the
+      // slice — the tonal gradient sells the depth and, spanning the cut, the
+      // band bridges the crossing so the flip is never a bare thin line.
+      // Surf Thick scales how far up the slab band reaches from the near cut.
+      float bodyFar = 3.9 + 4.7 * uMenThick;                // outer body extent
+      float edgeFar = 3.9 + 1.7 * uMenThick;                // dark-edge extent
+      float body = smoothstep(bodyFar, 3.7, vVz) * camNearWl;   // outer slab body
+      float edge = smoothstep(edgeFar, 3.7, vVz) * camNearWl;   // dark leading edge
+      if (body > 0.002) {
+        vec3 bodyCol = uWaterCol * vec3(0.070, 0.130, 0.170);
+        vec3 edgeCol = uWaterCol * vec3(0.028, 0.055, 0.082);
+        col = mix(col, bodyCol, body * 0.52);
+        col = mix(col, edgeCol, edge * 0.82);
       }
     }
   } else {
@@ -1586,6 +1665,7 @@ uniform float uTime, uAlpha, uDepth, uNight;
 uniform float uUnderwater, uUWStrength, uUWFogDen;
 // ceiling-look controls (Water panel): feature size · relief depth · brightness
 uniform float uCeilPatch, uCeilRelief, uCeilBright;
+uniform float uMenThick;   // waterline slab thickness (Water panel: Surf Thick)
 // The SAME Gerstner stack the top surface uses. Injecting it here means the
 // underside is shaded from the real wave field — every live control (strength,
 // chop, speed, patchiness) bends the Snell window exactly as it bends the
@@ -1662,7 +1742,7 @@ void main(){
   float skyUp = clamp(skyDir.y * 1.5 + 0.08, 0.0, 1.0);
   vec3 through = mix(uHor, uZen, pow(skyUp, 0.65)) * 3.0;
   through += uSunCol * pow(max(dot(skyDir, uSunDirW), 0.0), 24.0) * 1.6;
-  vec3 mirror = uWaterCol * vec3(0.12, 0.38, 0.46);
+  vec3 mirror = uWaterCol * vec3(0.13, 0.33, 0.50);
   vec3 reflectedColor = mirror * (0.90 + 0.26 * max(reflectedRay.y, 0.0));
   vec3 refractedColor = through * vec3(0.80, 1.00, 1.10) * (0.72 + 0.28 * rayThickness);
   vec3 col = mix(reflectedColor, refractedColor, (1.0 - belowFresnel) * rayThickness);
@@ -1719,12 +1799,19 @@ void main(){
     col = mix(col, waterFogCol, fogMix);
     a = max(a, fogMix);
   }
-  // waterline meniscus at the near-plane cut (mirror of the topside rim) —
-  // dark lip, matching the terrain-side edge
-  float men = smoothstep(5.4, 4.45, vVz) * (1.0 - smoothstep(2.0, 6.0, uDepth));
-  if (men > 0.002) {
-    col = mix(col, uWaterCol * vec3(0.055, 0.10, 0.13), men * 0.78);
-    a = max(a, men * 0.88);
+  // waterline meniscus at the near-plane cut (mirror of the topside slab) —
+  // the SAME tall two-tone dark lip so the underside of the surface has the
+  // matching thickness: crossing the waterline never swaps a thick edge for a
+  // thin one.
+  float menGate = 1.0 - smoothstep(2.5, 7.0, uDepth);
+  float bodyFar = 3.9 + 4.7 * uMenThick;
+  float edgeFar = 3.9 + 1.7 * uMenThick;
+  float body = smoothstep(bodyFar, 3.7, vVz) * menGate;
+  float edge = smoothstep(edgeFar, 3.7, vVz) * menGate;
+  if (body > 0.002) {
+    col = mix(col, uWaterCol * vec3(0.070, 0.130, 0.170), body * 0.52);
+    col = mix(col, uWaterCol * vec3(0.028, 0.055, 0.082), edge * 0.82);
+    a = max(a, body * 0.58 + edge * 0.90);
   }
   col = 1.0 - exp(-col * 1.45);
   col = pow(col, vec3(1.0/1.3));
@@ -2260,9 +2347,9 @@ void main(){
     // Underwater is a VOLUME, not a flat teal wall: a vertical gradient from
     // dark deep water below, up through mid blue-green, to a bright sunlit haze
     // near the surface overhead — plus a Snell-window sun bloom straight up.
-    vec3 fogDeep = vec3(0.012, 0.055, 0.092);   // deep blue (less teal)
-    vec3 fogMid  = vec3(0.030, 0.135, 0.185);
-    vec3 fogSurf = vec3(0.110, 0.300, 0.350);   // sunlit near-surface haze
+    vec3 fogDeep = vec3(0.010, 0.048, 0.098);   // deep blue (less teal)
+    vec3 fogMid  = vec3(0.022, 0.108, 0.192);   // blue, not teal (B > G)
+    vec3 fogSurf = vec3(0.078, 0.232, 0.338);   // sunlit near-surface haze, de-tealed
     vec3 waterBg = mix(fogMid, fogDeep, depth01);
     waterBg = mix(waterBg, fogSurf, upView * (0.40 + 0.50 * nearSurface));
     float snell = pow(clamp(y, 0.0, 1.0), 3.5) * (0.4 + 0.6 * nearSurface);
@@ -2597,14 +2684,14 @@ const TU = uniforms(terrProg, ['uCell','uCenterAbs','uCenterRel','uCamY','uWorld
   'uSunDirW','uSunCol','uLightCol','uAmbCol','uFogCol','uWaterCol','uZen','uHor','uCloudCol','uGrass','uForest','uRock','uSand','uSnowCol',
   'uFogDen','uSnowLine','uTime','uNight','uAscent','uFarFade','uHole','uUnderwater','uUnderwaterDepth','uBioStir','uCity','uSub','uWobble',
   'uUnderwaterStrength','uUnderwaterFogDensity','uCausticIntensity','uCausticScale','uLava','uHeaven',
-  'uWaveStr','uWaveChop','uWaveSpeed','uGustVary','uFoamAmt','uRipple',
+  'uWaveStr','uWaveChop','uWaveSpeed','uGustVary','uFoamAmt','uRipple','uMenThick',
   'uReflTex','uReflOn','uViewport','uClipBelow','uWaterSurfY']);
 const KU = uniforms(skyProg, ['uCamToWorld','uTanA','uSunDirW','uSunCol','uZen','uHor','uFogCol','uCloudCol','uNight','uTime','uHaze',
   'uSpaceBlend','uCamXZ','uCamY','uMoonCount','uMoonDir','uMoonCol','uMoonSize','uBodyCount','uBodyPos','uBodyR','uBodyA','uBodyB','uBodyAtmo','uBodyEmis','uBodySeed','uBodyWater','uBodyCap',
   'uBodyKind','uRingIn','uRingOut','uSunPosRel','uWarp','uFwdW','uUnderwater','uUnderwaterDepth','uThrust','uBioStir','uCity','uCamKm','uWaterSurfY']);
 const WU = uniforms(wsurfProg, ['uCell','uHalf','uCenterAbs','uCenterRel','uCamY','uWaterLvl','uPlanetRadM','uTime','uWobble','uCeilPatch','uCeilRelief','uCeilBright',
   'uWorldToCam','uProj','uSunDirW','uSunCol','uZen','uHor','uWaterCol','uAlpha','uDepth','uNight',
-  'uUnderwater','uUWStrength','uUWFogDen','uWaveStr','uWaveChop','uWaveSpeed','uGustVary']);
+  'uUnderwater','uUWStrength','uUWFogDen','uWaveStr','uWaveChop','uWaveSpeed','uGustVary','uMenThick']);
 const UPU = uniforms(uwPostProg, ['uResolution','uCamXZ','uSunDirW','uSunCol','uTime','uUnderwater','uDepth',
   'uStrength','uFogDensity','uShafts','uParticles','uTransition','uCamToWorld','uTanA','uCamY','uWaterLvl','uRayBright','uRayReach','uRayCaustic']);
 const UQU = uniforms(uwPartProg, ['uWorldToCam','uProj','uFwdW','uSunDirW','uTime','uDensity','uDepth','uUnderwater','uBioStir','uPartSize']);
@@ -3784,6 +3871,48 @@ function enterDiveSite() {
   toast('DIVE ENTRY — ' + Math.round(site.depth) + ' M WATER');
 }
 document.getElementById('btn-dive').addEventListener('click', enterDiveSite);
+// Touch-capability detection → body.touch. Keyed off touch CAPABILITY, not the
+// primary pointer: an iPad with a Magic Keyboard/trackpad reports pointer:fine
+// yet is still a touch device, so `(pointer:coarse)` missed it. `any-pointer`
+// and maxTouchPoints catch every phone/tablet in any orientation; the width
+// clause keeps narrow desktop windows working too. Re-evaluated on resize so
+// rotating an iPad (or attaching a trackpad) never strands the on-screen controls.
+function updateTouchClass() {
+  const touch = (window.matchMedia && (
+      matchMedia('(any-pointer: coarse)').matches ||
+      matchMedia('(max-width: 680px)').matches))
+    || (navigator.maxTouchPoints || 0) > 0
+    || ('ontouchstart' in window);
+  document.body.classList.toggle('touch', !!touch);
+}
+updateTouchClass();
+window.addEventListener('resize', updateTouchClass);
+window.addEventListener('orientationchange', updateTouchClass);
+try { matchMedia('(any-pointer: coarse)').addEventListener('change', updateTouchClass); } catch (_) {}
+
+// Mobile thruster: press-and-hold engages forward thrust via the SAME path as
+// ⌘ (keys.Meta), so all the thrust ramp / speed-boost / audio logic is reused.
+{
+  const thrusterBtn = document.getElementById('thruster');
+  if (thrusterBtn) {
+    const engage = (on) => {
+      keys.Meta = on;
+      thrusterBtn.classList.toggle('pressed', on);
+      if (on) S.lastInput = performance.now() / 1000;
+    };
+    thrusterBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      try { thrusterBtn.setPointerCapture(e.pointerId); } catch (_) {}
+      engage(true);
+    });
+    const release = (e) => { if (e) e.preventDefault(); engage(false); };
+    thrusterBtn.addEventListener('pointerup', release);
+    thrusterBtn.addEventListener('pointercancel', release);
+    thrusterBtn.addEventListener('lostpointercapture', () => engage(false));
+    // safety: if focus/visibility is lost mid-press, drop thrust
+    window.addEventListener('blur', () => engage(false));
+  }
+}
 function launchToOrbit() {
   if (S.mode === 'space') {
     S.launchGrace = Math.max(S.launchGrace || 0, 5.0);
@@ -3819,13 +3948,38 @@ stillBtn.addEventListener('click', () => {
   stillBtn.textContent = S.hold ? 'Resume' : 'Hold';
 });
 
+// Nav rows: single tap targets, DOUBLE-TAP warps (the touch equivalent of the R
+// key — phones can't press R). Two taps on the same body within 450 ms engage
+// warp toward it; if you're already in orbit of it, the second tap lands instead
+// (calls the E action), so one repeatable gesture takes a touch user all the way
+// down. Desktop R / E still work. Works for mouse double-click too (two clicks).
+let _navTap = { name: null, t: 0 };
+function goToBody(b) {
+  if (!b || b.emissive || S.mode !== 'space') return;
+  const near = nearestBodies().find(n => n.b === b);
+  if (near && near.dist < b.r * 2.2) {          // already in orbit → land
+    S.navTarget = b;
+    enterSelectedWorld();
+  } else {                                       // otherwise warp toward it
+    S.navTarget = b;
+    S.warping = true;
+    S.lastInput = performance.now() / 1000;
+    toast('WARP → ' + b.name);
+  }
+}
 document.getElementById('nav-rows').addEventListener('click', e => {
   const row = e.target.closest('.nav-row');
   if (!row || !row.dataset.b) return;
   const b = SYS.find(x => x.name === row.dataset.b);
-  if (b && !b.emissive) {
+  if (!b || b.emissive) return;
+  const now = performance.now();
+  if (_navTap.name === b.name && now - _navTap.t < 450) {   // second tap → go
+    _navTap = { name: null, t: 0 };
+    goToBody(b);
+  } else {                                                  // first tap → target
+    _navTap = { name: b.name, t: now };
     S.navTarget = (S.navTarget === b) ? null : b;
-    if (S.navTarget) toast('TARGET — ' + b.name + ' · R TO WARP');
+    if (S.navTarget) toast('TARGET — ' + b.name + ' · TAP AGAIN TO WARP');
   }
 });
 
@@ -4191,7 +4345,7 @@ function frame() {
     const isBelow = !!S.waterRenderBelow;
     if (!!S._wasBelow !== isBelow) S.waterCross = 1.0;   // flash only on true crossings
     S._wasBelow = isBelow;
-    S.waterCross = (S.waterCross || 0) * Math.exp(-dt * 3.5);
+    S.waterCross = (S.waterCross || 0) * Math.exp(-dt * 2.6);   // decays over ~0.5 s: a deliberate crossfade, not a hard flash
     S.underwaterDepth = overWater ? Math.max(0, surfHere - S.camY) : 0;
     const trans = UW.waterlineTransitionSmoothness;
     const targetUnderwater = overWater ? smoothstep(-0.35 * trans, 0.35 + trans, waterDelta) : 0;
@@ -4542,6 +4696,13 @@ function frame() {
     ? Math.max(0, 1 - Math.abs(uwSurfEye - S.camY) / 0.9) : 0;
   // slimmer now that the rendered meniscus owns the waterline edge
   document.getElementById('waterline').style.opacity = String(Math.min(0.26, bandV * 0.26));
+  // Surface-crossing crossfade: bloom driven by the crossing pulse (S.waterCross),
+  // scaled by the Crossfade slider and eased down away from the surface so a deep
+  // dive never washes. Reads as an intentional "breaking the surface" beat.
+  const crossNear = (S.mode === 'terrain' && wlV > -1e5)
+    ? (1 - Math.min(1, Math.abs(uwSurfEye - S.camY) / 6.0)) : 0;
+  const crossOpacity = Math.min(0.55, (S.waterCross || 0) * (UW.crossfade || 0) * (0.4 + 0.6 * crossNear));
+  document.getElementById('crossfade').style.opacity = String(crossOpacity);
   // underwater vignette blends in with the ramp instead of switching at a
   // threshold — no whole-screen pop at the crossing
   const vinT = Math.min(1, Math.max(0, (uwGeom - 0.04) / 0.5));
@@ -4663,6 +4824,7 @@ function frame() {
     gl.uniform1f(TU.uFoamAmt, WAVE.foam);
     gl.uniform1f(TU.uRipple, WAVE.detail);
     gl.uniform1f(TU.uWobble, UW.wobble);
+    gl.uniform1f(TU.uMenThick, UW.menThickness);
     gl.uniform1f(TU.uClipBelow, clipBelow);
     gl.uniform1f(TU.uReflOn, reflAmt);
     gl.uniform2f(TU.uViewport, vpW, vpH);
@@ -4952,6 +5114,7 @@ function frame() {
       const ceilIn = 0.10 + 0.90 * Math.min(1, Math.max(0, (S.underwaterDepth || 0) - 0.12) / 1.4);
       gl.uniform1f(WU.uAlpha, Math.min(1, (0.55 + uwGeom * 0.5) * ceilIn * UW.surfaceCeilingOpacity));
       gl.uniform1f(WU.uWobble, UW.wobble);
+      gl.uniform1f(WU.uMenThick, UW.menThickness);
       gl.uniform1f(WU.uCeilPatch, UW.ceilPatch);
       gl.uniform1f(WU.uCeilRelief, UW.ceilRelief);
       gl.uniform1f(WU.uCeilBright, UW.ceilBright);
@@ -5103,8 +5266,11 @@ function frame() {
         const l = Math.hypot(...n.dir) || 1;
         const aim = (n.dir[0]*fwd[0] + n.dir[1]*fwd[1] + n.dir[2]*fwd[2]) / l > 0.992;
         const isTgt = S.navTarget === n.b;
-        return `<div class="nav-row${aim || isTgt ? ' aim' : ''}" data-b="${n.b.name}" style="cursor:pointer" title="click target · R warp · E enter">` +
-               `${isTgt ? '⇢ ' : ''}<b>${n.b.name}</b> · ${fmtKm(n.dist)}${aim ? ' ◆' : ''} · E</div>`;
+        const orbit = n.dist < n.b.r * 2.2;
+        // double-tap action for this row (stars can't be warped to / landed on)
+        const act = n.b.emissive ? '' : (orbit ? ' · 2×LAND' : ' · 2×WARP');
+        return `<div class="nav-row${aim || isTgt ? ' aim' : ''}" data-b="${n.b.name}" style="cursor:pointer" title="tap target · double-tap warp/land · R warp · E enter">` +
+               `${isTgt ? '⇢ ' : ''}<b>${n.b.name}</b> · ${fmtKm(n.dist)}${aim ? ' ◆' : ''}${act}</div>`;
       }).join('');
     } else {
       rows.innerHTML = `<div class="nav-row"><b>${S.planet.name}</b> · LOCAL</div>`;
