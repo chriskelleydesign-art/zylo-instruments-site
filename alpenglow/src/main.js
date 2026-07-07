@@ -10,6 +10,8 @@
 import * as THREE from "three/webgpu";
 import { pass, positionWorld, attribute, uniform, smoothstep as tslSmoothstep,
          mx_noise_float, bumpMap, normalWorld, vec3 } from "three/tsl";
+import * as TSL from "three/tsl";   // vec2/float/cameraPosition pulled from namespace (link-safe)
+const { vec2, float, cameraPosition } = TSL;
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import { WaterSystem, Sky, getPresetParams } from "../lib/water-pro/index.js";
 import { createMusicEngine } from "./music.js";
@@ -87,8 +89,10 @@ const BODIES = [
   { name: "VULKAR", r: 1250, orbit: 190000, ang: 2.15, y: -1900, kind: "lava",
     a: [0.14, 0.07, 0.06], b: [0.62, 0.20, 0.08], atmo: [1.0, 0.42, 0.18], water: 0,
     land: { heightMul: 1.7, waterLvl: -1e6, snow: 1e6, seed: [451, 88],
-      grass: [0.30, 0.10, 0.05], forest: [0.20, 0.07, 0.04], rock: [0.20, 0.13, 0.11], sand: [0.42, 0.20, 0.09],
-      snowCol: [0.95, 0.55, 0.28] } },
+      clouds: 0,                     // molten world: no water-cloud cover at all
+      skyTint: [1.30, 0.54, 0.30],   // v4's red inferno haze — tints sky paint + fog
+      grass: [0.085, 0.055, 0.048], forest: [0.055, 0.038, 0.032], rock: [0.10, 0.075, 0.068], sand: [0.15, 0.09, 0.06],
+      snowCol: [0.40, 0.22, 0.14] } },
   { name: "AETHER", r: 2050, orbit: 204000, ang: 0.35, y: 2600, kind: "aether",
     a: [0.10, 0.30, 0.40], b: [0.46, 0.40, 0.66], atmo: [0.55, 0.95, 0.82], water: 1,
     land: { heightMul: 0.5, waterLvl: 60, snow: 1e6, seed: [318, 642],
@@ -259,6 +263,11 @@ function terrainRaw(wx, wz) {
     // near shore to ~1.75 by −22 m — wadeable shallows, genuinely deep basins.
     return fh < 0 ? fh * (1.2 + 0.55 * smoothstep(0, -22, fh)) : fh;
   }
+  // VULKAR (v4 parity): carve the lowlands deeper, then clamp them into
+  // dead-flat pans at y=2 — those pans ARE the lava lakes (the terrain
+  // material paints everything below ~y 4 as emissive melt). Staying ≥2
+  // keeps the WaterSystem's underwater pipeline off, same as other dry worlds.
+  if (PLANET.kind === "lava") h -= (1 - m) * 34;
   return Math.max(h, 2);
 }
 
@@ -284,6 +293,7 @@ function applyPlanetPalette(p) {
   uGrass.value.set(...PAL_LAND.grass);   uForest.value.set(...PAL_LAND.forest);
   uRock.value.set(...PAL_LAND.rock);     uSand.value.set(...PAL_LAND.sand);
   uSnowCol.value.set(...PAL_LAND.snow);  uSnowLine.value = PAL_LAND.snowLine;
+  uLavaAmt.value = p.kind === "lava" ? 1 : 0;
 }
 // AFTERCITY ground albedo — v2 parity: green lawns, asphalt roads with faint
 // lane dashes, concrete sidewalks/driveways/foundation pads, blobby yard trees.
@@ -413,6 +423,7 @@ function landColor(out, h, slopeY, wx, wz) {
 // isn't available for any reason we silently fall back to the plain material.
 const uCausticAmt = uniform(0);
 const uCausticTime = uniform(0);
+const uLavaAmt = uniform(0);        // 1 on VULKAR: basins glow as molten crust
 function makeTerrainMaterial() {
   try {
     const mat = new THREE.MeshStandardNodeMaterial({ roughness: 0.96, metalness: 0.0 });
@@ -457,6 +468,24 @@ function makeTerrainMaterial() {
       .add(mx_noise_float(np.mul(2.7)).mul(0.5))
       .add(mx_noise_float(np.mul(6.9)).mul(0.25));
     mat.normalNode = bumpMap(nDetail, uniform(0.4));
+
+    // ── VULKAR lava (v4's molten-crust branch, ported to TSL): the flat pans
+    // terrainRaw clamps at y=2 glow as dark cooling plates threaded with
+    // bright cracks; emissive, so it self-illuminates on the night side and
+    // under any sky. Nearby rock catches a pulsing under-glow (v4's cheap
+    // "lava is a light source" cue). All gated by uLavaAmt → zero cost off.
+    const lp = vec3(wp.x, 0.0, wp.z).mul(0.045);
+    const crack = mx_noise_float(lp.mul(2.6).add(vec3(t.mul(0.05), 0.0, t.mul(-0.04))))
+      .abs().oneMinus().pow(9.0);
+    const plate = mx_noise_float(lp.mul(0.7)).mul(0.5).add(0.5);
+    const pulse = plate.mul(12.0).add(t.mul(0.7)).sin().mul(0.19).add(0.81);
+    // v4 read: dark cooling plates dominate, the glow lives in THIN cracks
+    const melt = vec3(1.35, 0.30, 0.045).mul(crack.mul(1.6).add(0.07)).mul(pulse);
+    const lavaMask = tslSmoothstep(4.2, 2.4, wp.y);
+    const rimGlow = tslSmoothstep(26.0, 4.0, wp.y).mul(0.20);
+    mat.emissiveNode = melt.mul(lavaMask)
+      .add(vec3(1.0, 0.24, 0.04).mul(rimGlow).mul(pulse))
+      .mul(uLavaAmt);
     return mat;
   } catch (e) {
     console.warn("caustics unavailable — plain terrain material", e);
@@ -623,17 +652,30 @@ class HousePool {
       this.canopy.setColorAt(t, this.color.setRGB(0.10 + r * 0.06, g, 0.07 + r * 0.05));
       t++;
     };
+    // WORLD-ANCHORED scan lattice (the v4 rule): the sample grid must snap to
+    // fixed world coordinates, not start at the camera — a camera-anchored
+    // grid hits each lot at a different point after every 120 m rebuild, so
+    // cityLot resolved differently and the whole suburb visibly jumped.
+    // Snapped + deduped by lot id, a house is now a pure function of its lot.
     const R = 780, stepX = 54, stepZ = 76;
-    for (let wz = camZ - R; wz <= camZ + R && n < this.max; wz += stepZ)
-      for (let wx = camX - R; wx <= camX + R && n < this.max; wx += stepX) {
+    const x0 = Math.floor((camX - R) / stepX) * stepX;
+    const z0 = Math.floor((camZ - R) / stepZ) * stepZ;
+    const seen = new Set();
+    for (let wz = z0; wz <= camZ + R && n < this.max; wz += stepZ)
+      for (let wx = x0; wx <= camX + R && n < this.max; wx += stepX) {
         const lot = cityLot(wx, wz, land);
         if (!lot) continue;
+        const lotKey = lot.lotX + "," + lot.lotZ;
+        if (seen.has(lotKey)) continue;
+        seen.add(lotKey);
+        // jitter derives ONLY from the lot, so it never re-rolls on rebuild
         const jx = (lot.id - 0.5) * 12, jz = (hash12(lot.lotX + 3, lot.lotZ + 9) - 0.5) * 14;
         const hx = wx + jx, hz = wz + jz;
         const gy = terrainRaw(hx, hz);
-        const w = 9 + lot.id * 4, d = 10 + hash12(lot.lotX, lot.lotZ + 1) * 5;
-        const wallH = 3.6 + hash12(lot.lotX + 5, lot.lotZ) * 2.2;
-        const roofH = 2.2 + hash12(lot.lotX + 2, lot.lotZ + 4) * 1.4;
+        // v4-scale homes: real two-story presence instead of garden sheds
+        const w = 12 + lot.id * 5, d = 13 + hash12(lot.lotX, lot.lotZ + 1) * 6;
+        const wallH = 4.6 + hash12(lot.lotX + 5, lot.lotZ) * 3.4;
+        const roofH = 2.6 + hash12(lot.lotX + 2, lot.lotZ + 4) * 1.7;
         const yaw = (lot.id > 0.5 ? 0 : Math.PI / 2) + (lot.id - 0.5) * 0.05;
 
         this.dummy.position.set(hx, gy - 0.25, hz);
@@ -836,6 +878,92 @@ class InfiniHousePool {
   }
 }
 
+// ── altitude-projected cloud dome (v4 technique, TSL/WebGPU) ────────────────
+// A camera-locked sky dome whose fragment shader projects the view ray onto a
+// cloud plane at a REAL world altitude (3300 m), so the deck slides past as you
+// translate, grows as you climb, and flips to sunlit tops once above it — true
+// parallax the painted equirect dome can't give. Ported from v4.html ~1979.
+const uCloudTime = uniform(0);
+const uCloudHaze = uniform(0.08);
+const uCloudDry  = uniform(1);                       // (1-spaceBlend)*dry*!underwater
+const uCloudCov  = uniform(0.45);                    // user/planet cloud-cover dial
+const uCloudSunDir = uniform(new THREE.Vector3(0, 1, 0));
+const uCloudSunCol = uniform(new THREE.Vector3(1, 0.9, 0.75));
+const uCloudTint   = uniform(new THREE.Vector3(1, 1, 1));
+
+function makeCloudDome() {
+  const mat = new THREE.MeshBasicNodeMaterial({
+    transparent: true, depthWrite: false, side: THREE.BackSide, fog: false,
+  });
+  // fbm from mx_noise (remap each octave to ~[0,1]); vec2 domain lifted to 3D
+  const n2  = (p) => mx_noise_float(vec3(p.x, p.y, 0)).mul(0.5).add(0.5);
+  const fbm = (p) => n2(p).mul(0.5)
+    .add(n2(p.mul(2.03)).mul(0.25))
+    .add(n2(p.mul(4.10)).mul(0.125))
+    .add(n2(p.mul(8.20)).mul(0.0625));
+
+  const d = positionWorld.sub(cameraPosition).normalize();
+  const camY = cameraPosition.y;
+  const camXZ = vec2(cameraPosition.x, cameraPosition.z);
+  const dyRaw = d.y;
+  const dyAbs = dyRaw.abs();
+  const hfade = tslSmoothstep(0.012, 0.055, dyAbs);
+  const dy = dyAbs.max(0.012).mul(dyRaw.div(dyAbs.max(0.0001)));   // sign-preserving, off-zero
+  const sd = d.dot(uCloudSunDir).max(0.0);
+
+  // ── cumulus deck at 3300 m ──
+  const relD = camY.mul(-1).add(3300.0);
+  const tD = relD.div(dy);
+  const tDp = tD.max(0.0);                                  // clamp so exp() can't blow up
+  const front = tslSmoothstep(-0.0001, 0.0001, tD);         // 1 when the deck is ahead
+  const cw = vec2(
+    camXZ.x.add(d.x.mul(tDp)).mul(0.00058).add(uCloudTime.mul(0.006)),
+    camXZ.y.add(d.z.mul(tDp)).mul(0.00058).add(uCloudTime.mul(0.0023)));
+  const horFade = tDp.mul(-0.000055).exp();
+  const wv2  = fbm(cw.mul(0.20).add(3.7));
+  const cN   = fbm(cw.mul(0.34).add(wv2.mul(0.75)));
+  const det  = fbm(cw.mul(0.92).add(wv2.mul(0.4)).add(7.0));
+  const dens = cN.add(det.mul(0.30));
+  const thr  = uCloudHaze.mul(-0.17).add(0.545).sub(uCloudCov.sub(0.45).mul(0.42));
+  const cov  = tslSmoothstep(thr, thr.add(0.13), dens).mul(horFade).mul(hfade);
+  const base = fbm(cw.mul(0.34).add(wv2.mul(0.75)).sub(0.42));
+  const form = dens.sub(base).mul(2.6).add(0.5).clamp(0, 1);
+  const belowM = relD.div(440.0).add(0.5).clamp(0, 1);
+  const top = uCloudTint.mul(sd.pow(2.0).mul(0.60).add(1.02));
+  const bot = uCloudTint.mul(vec3(0.46, 0.50, 0.60)).add(uCloudSunCol.mul(sd.pow(6.0)).mul(0.28));
+  const ccUp = bot.mix(top, form.mul(0.65).add(0.35));
+  const ccDn = bot.mix(bot.mix(top, float(0.55)), form.mul(0.85));
+  const cc = ccUp.mix(ccDn, belowM).mul(form.mul(0.52).add(0.72));
+  const edge = tslSmoothstep(thr, thr.add(0.05), dens).sub(tslSmoothstep(thr.add(0.05), thr.add(0.24), dens));
+  const cumCol = cc.add(uCloudSunCol.mul(edge).mul(float(0.17).mix(float(0.09), belowM)));
+  const cumA = cov.mul(0.94).mul(front);
+
+  // ── high cirrus at 7800 m ──
+  const relC = camY.mul(-1).add(7800.0);
+  const tC = relC.div(dy);
+  const tCp = tC.max(0.0);
+  const frontC = tslSmoothstep(-0.0001, 0.0001, tC);
+  const cw2 = vec2(
+    camXZ.x.add(d.x.mul(tCp)).mul(0.00016).add(uCloudTime.mul(0.012)),
+    camXZ.y.add(d.z.mul(tCp)).mul(0.00016).sub(uCloudTime.mul(0.004)));
+  const ci = fbm(cw2.mul(vec2(1.0, 2.6)).add(fbm(cw2.mul(0.5)).mul(0.8)));
+  const wisp = tslSmoothstep(0.52, 0.80, ci).mul(tCp.mul(-0.00030).exp())
+                 .mul(uCloudHaze.mul(0.35).add(0.30)).mul(hfade);
+  const cirCol = uCloudTint.mul(sd.pow(3.0).mul(0.35).add(0.96));
+  const cirA = wisp.mul(frontC);
+
+  // composite cumulus over cirrus, gated by dry/atmosphere
+  const aCir = cirA.mul(uCloudDry).clamp(0, 1);
+  const aCum = cumA.mul(uCloudDry).clamp(0, 1);
+  mat.colorNode = cirCol.mix(cumCol, aCum.div(aCum.add(aCir.mul(aCum.oneMinus())).max(0.0001)));
+  mat.opacityNode = aCum.add(aCir.mul(aCum.oneMinus())).clamp(0, 1);
+
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(12000, 32, 20), mat);
+  mesh.renderOrder = 3;
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
 // ── atmosphere clouds: soft billboard puffs drifting around the camera ──────
 // Cheap (one draw call's worth of sprites, no per-frame texture work) but they
 // give the sky real parallax depth the painted equirect deck can't.
@@ -896,49 +1024,80 @@ class CloudField {
       // wider spread → the deck fills the sky like v4 instead of a few blobs
       // overhead. Two height tiers (a main deck + a sparser high layer) give the
       // sky depth the single-height billboard field was missing.
-      const r = 700 + Math.random() * 4200;
-      // ONE soft stratus band (like v4's deck), not scattered puffs at two tiers
+      const r = 900 + Math.random() * 5200;
+      // one coherent CUMULUS DECK band at ~2.6–3.3 km (v4's deck altitude, so
+      // the climb passes through real masses) — sprites can't tile or seam
       const cl = {
         x: Math.cos(a) * r, z: Math.sin(a) * r,
-        y: 620 + Math.random() * 220,          // a coherent deck ~620–840 m
+        y: 2620 + Math.random() * 680,
         driftX: 1.4 + Math.random() * 2.0,
         driftZ: (Math.random() - 0.5) * 1.3,
         parts: [],
       };
-      const puffs = 3 + Math.floor(Math.random() * 3);
-      const w0 = 900 + Math.random() * 900;    // much wider → sheets, not balls
-      for (let p = 0; p < puffs; p++) {
-        const mat = new THREE.SpriteMaterial({
-          map: this.texes[Math.floor(Math.random() * this.texes.length)],
-          transparent: true, opacity: 0.5, depthWrite: false, fog: true });
-        const sp = new THREE.Sprite(mat);
-        const w = w0 * (p === 0 ? 1 : 0.55 + Math.random() * 0.4);
-        // FLAT: height ~14% of width → thin horizontal sheet, reads as stratus
-        sp.scale.set(w, w * (0.13 + Math.random() * 0.05), 1);
-        cl.parts.push({ sp,
-          ox: p === 0 ? 0 : (Math.random() - 0.5) * w0 * 1.1,
-          oy: (Math.random() - 0.5) * 24,       // tight vertical spread → a layer
-          oz: (Math.random() - 0.5) * w0 * 0.5,
-          op: (p === 0 ? 0.42 : 0.30) + Math.random() * 0.10 });
-        scene.add(sp);
+      // ── VOLUMETRIC STACK: each cloud is built in three tiers instead of one
+      // flat sheet — a wide dark BASE slab, 2-3 mid LOBES with real height, and
+      // 1-2 smaller bright TOP caps riding above them. The tiers overlap with
+      // vertical structure (~40% of the cloud's width in height), and the
+      // update() below drifts upper tiers slightly faster than the base, so
+      // parallax inside one cloud sells actual thickness — no duplicated
+      // deck planes, just a lit mass with a top, a body, and an underside.
+      const w0 = 1000 + Math.random() * 1000;
+      const tiers = [
+        { n: 1,                                  y: 0,               s: [1.55, 0.30], op: 0.34, drift: 1.00 }, // base slab (shaded underside)
+        { n: 2 + Math.floor(Math.random() * 2),  y: w0 * 0.16,       s: [0.85, 0.52], op: 0.40, drift: 1.06 }, // mid lobes (tall, carry the volume)
+        { n: 1 + Math.floor(Math.random() * 2),  y: w0 * 0.34,       s: [0.48, 0.42], op: 0.46, drift: 1.13 }, // sunlit caps (cauliflower heads)
+      ];
+      for (let ti = 0; ti < tiers.length; ti++) {
+        const T = tiers[ti];
+        for (let p = 0; p < T.n; p++) {
+          const mat = new THREE.SpriteMaterial({
+            map: this.texes[Math.floor(Math.random() * this.texes.length)],
+            transparent: true, opacity: 0.5, depthWrite: false, fog: true });
+          const sp = new THREE.Sprite(mat);
+          const w = w0 * T.s[0] * (0.8 + Math.random() * 0.4);
+          sp.scale.set(w, w0 * T.s[1] * (0.85 + Math.random() * 0.3), 1);
+          cl.parts.push({ sp,
+            ox: (Math.random() - 0.5) * w0 * (ti === 0 ? 0.3 : 0.85),
+            oy: T.y + (Math.random() - 0.5) * w0 * 0.10,
+            oz: (Math.random() - 0.5) * w0 * 0.4,
+            op: T.op + Math.random() * 0.08,
+            tier: ti,                     // 0 base · 1 body · 2 top (shading + parallax)
+            drift: T.drift,
+            dph: 0 });                    // accumulated extra drift for this tier
+          scene.add(sp);
+        }
       }
       this.clusters.push(cl);
     }
   }
-  update(dt, camX, camZ, camY, hour, spaceBlend, visible) {
+  update(dt, camX, camZ, camY, hour, spaceBlend, visible, cov = 0.45) {
     const P = skyAt(hour);
     const day = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 0.9, 0.14, 1.0);
     const fade = clamp(1 - spaceBlend * 2.2, 0, 1);
-    const show = visible && fade > 0.02;
-    // golden-hour warmth follows the sky's glow colour
-    const cr = day * (0.86 + P.glow[0] * 0.22);
-    const cg = day * (0.87 + P.glow[1] * 0.19);
-    const cb = day * (0.90 + P.glow[2] * 0.16);
+    const covA = 0.30 + 0.95 * cov;                 // dial scales the whole field
+    const show = visible && fade > 0.02 && cov > 0.03;
+    // ── two-toned dusk shading (matches the painted sky): sunlit caps take
+    // the sun's colour, the base slab cools toward the zenith slate. At noon
+    // duskW≈0 and this degrades to the plain white-top/grey-base ramp.
+    const el = 62 * Math.sin(Math.PI * (hour - 6) / 12);
+    const duskW = clamp(1 - Math.abs(el - 1.5) / 13, 0, 1);
+    const lift = 1 + duskW * 0.85;
+    const litR = day * lerp(1.02, P.glow[0] * 1.05, duskW * 0.85) * lift;
+    const litG = day * lerp(1.03, P.glow[1] * 0.95, duskW * 0.85) * lift;
+    const litB = day * lerp(1.06, P.glow[2] * 0.90, duskW * 0.85) * lift;
+    // the sprite textures already bake a dark underside — a dark tint on top
+    // of that double-darkened the bases into harsh near-black blobs. Keep the
+    // shadow tint luminous; the baked gradient supplies the rest.
+    const shR = day * (0.62 + (P.mid[0] + P.glow[0] * 0.3) * 0.40);
+    const shG = day * (0.65 + (P.mid[1] + P.glow[1] * 0.3) * 0.40);
+    const shB = day * (0.72 + (P.mid[2] + P.glow[2] * 0.3) * 0.40);
     // passAmt: how deep the camera sits inside the cloud deck (its clusters span
     // y≈330..760). Exposed so the frame loop can whiten the fog into a soft
     // "passing through cloud" band instead of the camera punching hard sprites.
-    this.passAmt = show ? clamp(1 - Math.abs(camY - 730) / 220, 0, 1) : 0;
-    const R = 5000;   // matches the wider cluster spread so the deck isn't clipped
+    // whiteout envelope: the deck now spans ~2.6–3.9 km including the stacked
+    // tops, so punching through takes real time — the fog whiteout follows
+    this.passAmt = (show ? clamp(1 - Math.abs(camY - 3050) / 780, 0, 1) : 0) * clamp(cov * 2.2, 0, 1);
+    const R = 6200;   // matches the wider cluster spread so the deck isn't clipped
     for (const cl of this.clusters) {
       cl.x += cl.driftX * dt;
       cl.z += cl.driftZ * dt;
@@ -946,31 +1105,343 @@ class CloudField {
       if (cl.x - camX < -R) cl.x += R * 2;
       if (cl.z - camZ >  R) cl.z -= R * 2;
       if (cl.z - camZ < -R) cl.z += R * 2;
+      // horizon fade: far clusters went edge-on at the skyline and their lit
+      // rims painted a dashed white line across the horizon — melt them out
+      // over the last stretch of the wrap radius instead
+      const dxz = Math.hypot(cl.x - camX, cl.z - camZ);
+      const dFade = 1 - smoothstep(3700, 5500, dxz);
       for (const pt of cl.parts) {
-        pt.sp.visible = show;
-        if (!show) continue;
-        pt.sp.position.set(cl.x + pt.ox, cl.y + pt.oy, cl.z + pt.oz);
-        pt.sp.material.color.setRGB(cr, cg, cb);
+        // cull, don't just fade: a sprite at 5% opacity still rasterizes its
+        // full quad — near-invisible far clusters were pure fill-rate waste
+        pt.sp.visible = show && dFade > 0.15;
+        if (!pt.sp.visible) continue;
+        // intra-cloud parallax: upper tiers drift a touch faster than the base,
+        // so the stack shears subtly as you fly past — the depth cue that makes
+        // the tiers read as one thick mass instead of stacked cards
+        pt.dph += cl.driftX * (pt.drift - 1) * dt;
+        pt.sp.position.set(cl.x + pt.ox + pt.dph, cl.y + pt.oy, cl.z + pt.oz);
+        // tier shading: shadowed slab under the body, sun-fed caps on top
+        const tm = pt.tier === 0 ? 0.38 : pt.tier === 1 ? 0.68 : 1.0;
+        pt.sp.material.color.setRGB(
+          lerp(shR, litR, tm), lerp(shG, litG, tm), lerp(shB, litB, tm));
         // per-sprite vertical fade: a puff within ~90 m of the camera's height
         // dissolves so you never see a hard billboard card slice past on ascent
         const vGap = Math.abs((cl.y + pt.oy) - camY);
-        const vFade = smoothstep(30, 130, vGap);
-        pt.sp.material.opacity = pt.op * fade * (0.45 + day * 0.55) * vFade;
+        const vFade = smoothstep(60, 320, vGap);   // big cards dissolve early; the whiteout owns the interior
+        pt.sp.material.opacity = pt.op * fade * (0.45 + day * 0.55) * vFade * dFade * covA;
       }
     }
   }
 }
 
+// ── v4 cloud decks: horizontal planes anchored at REAL world altitudes ───────
+// You climb UP THROUGH them (v4's key ascent feel): grey-blue undersides from
+// below, a soft whiteout as you pass through the deck altitude, then sunlit tops
+// from above. Each plane follows the camera in XZ (endless deck) and scrolls its
+// texture to drift; distance fog melts the far edge into haze (v4's horFade).
+function makeCloudDeckTexture(seed, freq, thr, soft) {
+  const S = 512;
+  const cnv = document.createElement("canvas"); cnv.width = cnv.height = S;
+  const ctx = cnv.getContext("2d");
+  const img = ctx.createImageData(S, S);
+  const d = img.data;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const u = x / S, v = y / S;
+    const wx = u * freq, wy = v * freq;
+    const warp = fbm(wx * 0.6 + seed, wy * 0.6 - seed, 3);       // domain warp → billows
+    const c = fbm(wx + warp * 0.75 + seed, wy + warp * 0.75, 4);
+    const det = fbm(wx * 2.7 + 7, wy * 2.7 - 3, 3);
+    const dens = c + det * 0.30;
+    let cov = clamp((dens - thr) / soft, 0, 1);
+    cov = cov * cov * (3 - 2 * cov);
+    const form = clamp((dens - thr) * 3 + 0.4, 0, 1);            // baked cauliflower form
+    const lit = 0.70 + 0.55 * form;
+    const i = (y * S + x) * 4;
+    d[i] = clamp(255 * lit, 0, 255); d[i + 1] = clamp(255 * lit, 0, 255); d[i + 2] = clamp(255 * (lit * 0.98 + 0.02), 0, 255);
+    d[i + 3] = cov * 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  // anisotropy + mipmaps kill the grazing-angle moiré that read as a dashed
+  // line across the horizon where the deck plane goes near edge-on
+  tex.anisotropy = 16;
+  tex.generateMipmaps = true;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  return tex;
+}
+class CloudDeck {
+  constructor(scene) {
+    const mkPlane = (y, size, tex, rep, baseOp) => {
+      tex.repeat.set(rep, rep);
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true,
+        depthWrite: false, side: THREE.DoubleSide, fog: true, opacity: baseOp,
+        vertexColors: true });
+      const geo = new THREE.PlaneGeometry(size, size, 24, 24);
+      // radial vertex-alpha: fade the deck to nothing toward its rim so the flat
+      // plane never shows a hard geometric edge or grazing line at the horizon
+      const pos = geo.attributes.position, N = pos.count;
+      const cols = new Float32Array(N * 4);
+      const half = size / 2;
+      for (let i = 0; i < N; i++) {
+        const r = Math.hypot(pos.getX(i), pos.getY(i)) / half;
+        // aggressive fade: only the near cloud disk around the camera shows;
+        // the far/grazing region (which forms the edge-on horizon line) fades
+        // to nothing well before the rim
+        const a = 1 - smoothstep(0.16, 0.62, r);
+        cols[i * 4] = 1; cols[i * 4 + 1] = 1; cols[i * 4 + 2] = 1; cols[i * 4 + 3] = a;
+      }
+      geo.setAttribute("color", new THREE.BufferAttribute(cols, 4));
+      const m = new THREE.Mesh(geo, mat);
+      m.rotation.x = -Math.PI / 2;
+      m.position.y = y;
+      m.renderOrder = -2;
+      m.frustumCulled = false;
+      scene.add(m);
+      return { m, tex, y, baseOp };
+    };
+    // cumulus deck @ 3300 m (v4's low deck). A second high cirrus plane was
+    // dropped — from far below it went edge-on and drew a faint horizon line;
+    // the cumulus deck alone carries the full climb-through-cloud experience.
+    this.cumulus = mkPlane(3300, 60000, makeCloudDeckTexture(1.7, 9, 0.52, 0.16), 6, 0.92);
+    this.decks = [this.cumulus];
+    this.passAmt = 0;
+  }
+  update(dt, camX, camZ, camY, hour, spaceBlend, visible) {
+    const P = skyAt(hour);
+    const day = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 0.9, 0.14, 1.0);
+    const fade = clamp(1 - (spaceBlend - 0.55) / 0.35, 0, 1);   // gone before space
+    const show = visible && fade > 0.01;
+    // whiteout envelope while crossing the cumulus deck (drives the fog whiten)
+    this.passAmt = show ? clamp(1 - Math.abs(camY - 3300) / 260, 0, 1) : 0;
+    for (const deck of this.decks) {
+      deck.m.visible = show;
+      if (!show) continue;
+      deck.m.position.set(camX, deck.y, camZ);
+      const spd = 0.0016;
+      deck.tex.offset.x = (deck.tex.offset.x + dt * spd) % 1;
+      deck.tex.offset.y = (deck.tex.offset.y + dt * spd * 0.4) % 1;
+      // sunlit warm tops when above ↔ grey-blue undersides when below, cross-
+      // faded across ±260 m so crossing the deck never hard-flips the shading
+      const above = clamp((camY - deck.y) / 260 + 0.5, 0, 1);
+      const shade = lerp(day * 0.5, day * (0.98 + P.glow[0] * 0.18), above);
+      deck.m.material.color.setRGB(
+        shade * (0.94 + P.glow[0] * 0.10), shade * (0.95 + P.glow[1] * 0.08), shade * 1.02);
+      // fade the plane out within ±260 m of the camera's altitude so its flat
+      // sheet never slices the view as a hard edge-on line — the whiteout owns
+      // that band instead
+      const near = smoothstep(45, 260, Math.abs(camY - deck.y));
+      deck.m.material.opacity = deck.baseOp * fade * (0.5 + day * 0.5) * near;
+    }
+  }
+}
+
+// ── crisp night stars: camera-locked Points shell (terrain scene) ───────────
+// Painted equirect stars are inherently blurry (one texel ≈ 25 px on screen),
+// so the SHARP stars are real 3D points on a far sphere around the camera;
+// the painted stars stay dim, feeding the water's reflections with soft glow.
+class NightStars {
+  constructor(scene, n = 1300) {
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+    const R = 11500;
+    for (let i = 0; i < n; i++) {
+      // upper-hemisphere-biased directions
+      let x, y, z, l;
+      do { x = Math.random() * 2 - 1; y = Math.random(); z = Math.random() * 2 - 1; l = Math.hypot(x, y, z); }
+      while (l < 0.1 || l > 1);
+      y = y * 0.96 + 0.04;
+      pos[i * 3] = (x / l) * R; pos[i * 3 + 1] = (y / l) * R; pos[i * 3 + 2] = (z / l) * R;
+      const m = Math.random();                       // magnitude: many faint, few bright
+      const b = 0.22 + m * m * m * 0.68;
+      const warm = Math.random();
+      col[i * 3] = b * (0.80 + warm * 0.20); col[i * 3 + 1] = b * (0.84 + warm * 0.08); col[i * 3 + 2] = b * (1.0 - warm * 0.18);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    this.mat = new THREE.PointsMaterial({ size: 1.35, sizeAttenuation: false, vertexColors: true,
+      transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+    this.pts = new THREE.Points(geo, this.mat);
+    this.pts.frustumCulled = false;
+    this.pts.renderOrder = -3;
+    this.pts.visible = false;
+    scene.add(this.pts);
+  }
+  update(camPos, nightAmt, spaceBlend, glowG = 0) {
+    // stars wait for the afterglow: while the dusk band still burns (high g)
+    // only the brightest hint shows; the field arrives as the sky truly darkens
+    const glowDamp = 1 - clamp((glowG - 0.25) / 0.55, 0, 1);
+    const a = nightAmt * (1 - clamp(spaceBlend * 1.6, 0, 1)) * glowDamp;
+    this.pts.visible = a > 0.02;
+    this.mat.opacity = a * 0.9;
+    if (this.pts.visible) this.pts.position.copy(camPos);
+  }
+}
+
+// ── horizon curtain: a camera-centred ring at 26 km (beyond every water/
+// terrain tile) that melts the sea→sky seam into the fog colour. The water
+// library's far-field wave facets catch the bright twilight sky at grazing
+// angles as dashed glints (scene-bisect verified; no exposed setting reaches
+// them) — this curtain simply owns that band, like v3's transition haze.
+class HorizonVeil {
+  constructor(scene) {
+    const R = 26000;
+    const geo = new THREE.CylinderGeometry(R, R, 1, 96, 10, true);
+    const pos = geo.attributes.position, N = pos.count;
+    const cols = new Float32Array(N * 4);
+    this.azi = new Float32Array(N);            // per-vertex azimuth for sky sampling
+    for (let i = 0; i < N; i++) {
+      const t = pos.getY(i) + 0.5;              // 0 bottom … 1 top
+      // full strength almost to the top (the true-horizon strip lives there),
+      // with a soft upper lip melting into open sky
+      const a = smoothstep(1.0, 0.93, t) * smoothstep(0.0, 0.12, t);
+      cols[i * 4] = 1; cols[i * 4 + 1] = 1; cols[i * 4 + 2] = 1; cols[i * 4 + 3] = a;
+      this.azi[i] = Math.atan2(pos.getX(i), pos.getZ(i));
+    }
+    this.colAttr = new THREE.BufferAttribute(cols, 4);
+    geo.setAttribute("color", this.colAttr);
+    this.mat = new THREE.MeshBasicMaterial({ transparent: true, vertexColors: true,
+      side: THREE.BackSide, depthWrite: false, fog: false });
+    this.m = new THREE.Mesh(geo, this.mat);
+    this.m.renderOrder = 5;
+    this.m.frustumCulled = false;
+    this.m.visible = false;
+    scene.add(this.m);
+    this._lastTint = -1;
+  }
+  update(camX, camY, camZ, waterLvl, fogColor, spaceBlend, submerged, now) {
+    const on = waterLvl > -1e5 && !submerged && spaceBlend < 0.6;
+    this.m.visible = on;
+    if (!on) return;
+    // dynamic vertical reach: on a flat world the far water climbs toward EYE
+    // level, so the curtain's top must ride just above the camera to cover the
+    // true-horizon strip where the grazing glints live; the bottom reaches
+    // below sea level so no sightline slips under it.
+    const top = Math.max(waterLvl + 300, camY + 70);
+    const bottom = waterLvl - (Math.max(camY, 60) * 0.55 + 400);
+    this.m.scale.set(1, top - bottom, 1);
+    this.m.position.set(camX, (top + bottom) / 2, camZ);
+    this.mat.opacity = 1 - clamp(spaceBlend * 1.8, 0, 1);
+    // ── the veil IS the sky: tint every column from the painted sky's just-
+    // above-horizon row at that column's azimuth, so the curtain reads as the
+    // horizon gradient continuing down over the water seam — not a flat band.
+    if (now - (this._lastTint || -9) > 0.5) {
+      this._lastTint = now;
+      const W = skyCanvas.width;
+      const row = skyCtx.getImageData(0, Math.floor(skyCanvas.height * 0.478), W, 1).data;
+      const cols = this.colAttr.array;
+      for (let i = 0; i < this.azi.length; i++) {
+        // equirect u ↔ world azimuth (matches three's equirect mapping)
+        let u = 0.5 - this.azi[i] / (Math.PI * 2);
+        u = ((u % 1) + 1) % 1;
+        const px = Math.min(W - 1, Math.floor(u * W)) * 4;
+        // canvas bytes are sRGB; vertex colors feed the linear pipeline
+        cols[i * 4]     = Math.pow(row[px] / 255, 2.2);
+        cols[i * 4 + 1] = Math.pow(row[px + 1] / 255, 2.2);
+        cols[i * 4 + 2] = Math.pow(row[px + 2] / 255, 2.2);
+      }
+      this.colAttr.needsUpdate = true;
+      this.mat.color.setRGB(1, 1, 1);
+    }
+  }
+}
+
+// ── night plankton: bioluminescent motes in and just over the water ─────────
+// Glowing cyan points in a camera-following tile spanning the top of the water
+// column (−14 m … +2 m). Only alive at night near/under water; additive, so
+// they read as electric life against the dark sea.
+class NightPlankton {
+  constructor(scene, n = 900) {
+    const box = this.box = 260;
+    const pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      pos[i * 3]     = Math.random() * box;
+      pos[i * 3 + 1] = -14 + Math.random() * 16;
+      pos[i * 3 + 2] = Math.random() * box;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const cnv = document.createElement("canvas"); cnv.width = cnv.height = 64;
+    const c2 = cnv.getContext("2d");
+    const g = c2.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(140,255,235,1)");
+    g.addColorStop(0.35, "rgba(40,220,255,0.55)");
+    g.addColorStop(1, "rgba(0,80,120,0)");
+    c2.fillStyle = g; c2.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(cnv);
+    this.mat = new THREE.PointsMaterial({ map: tex, size: 2.8, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, color: 0x9fffe8 });
+    this.pts = new THREE.Points(geo, this.mat);
+    this.pts.frustumCulled = false;
+    this.pts.visible = false;
+    scene.add(this.pts);
+    // ── bio-glow patches: soft cyan pools of light lying ON the sea surface,
+    // so whole stretches of the night ocean luminesce — and diving into one
+    // puts you inside the glow with the motes. Flat additive quads, not
+    // sprites (sprites always face the camera and would stand up like cards).
+    const gcnv = document.createElement("canvas"); gcnv.width = gcnv.height = 128;
+    const g2 = gcnv.getContext("2d");
+    const gg = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gg.addColorStop(0, "rgba(120,255,230,0.9)");
+    gg.addColorStop(0.4, "rgba(30,200,235,0.35)");
+    gg.addColorStop(1, "rgba(0,60,90,0)");
+    g2.fillStyle = gg; g2.fillRect(0, 0, 128, 128);
+    const gtex = new THREE.CanvasTexture(gcnv);
+    this.patches = [];
+    for (let i = 0; i < 4; i++) {
+      const mat = new THREE.MeshBasicMaterial({ map: gtex, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+      const w = 70 + i * 34;
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.7), mat);
+      m.rotation.x = -Math.PI / 2;
+      m.renderOrder = 2;
+      m.frustumCulled = false;
+      m.visible = false;
+      scene.add(m);
+      this.patches.push({ m, ox: (i * 73.7) % this.box, oz: (i * 41.3 + 30) % this.box, ph: i * 1.9 });
+    }
+  }
+  update(now, camX, camZ, nightAmt, waterAmt) {
+    const on = nightAmt > 0.04 && waterAmt > 0.03;
+    this.pts.visible = on;
+    for (const pa of this.patches) pa.m.visible = on;
+    if (!on) { this.mat.opacity = 0; return; }
+    const b = this.box;
+    // tile snaps to a world lattice around the camera (stationary motes)
+    const tx = Math.floor(camX / b) * b, tz = Math.floor(camZ / b) * b;
+    this.pts.position.set(tx, Math.sin(now * 0.3) * 0.4, tz);
+    this.mat.opacity = nightAmt * (0.45 + waterAmt * 0.55) * (0.80 + 0.20 * Math.sin(now * 0.9));
+    for (const pa of this.patches) {
+      pa.m.position.set(tx + pa.ox, 0.4, tz + pa.oz);
+      // slow independent breathing so the pools bloom and dim like living light
+      pa.m.material.opacity = nightAmt * (0.10 + 0.09 * (0.5 + 0.5 * Math.sin(now * 0.23 + pa.ph)));
+    }
+  }
+}
+
 // ── procedural equirect sky (feeds the water's reflections) ─────────────────
+// Hand-authored from sunset photography: each key carries hor (skyline),
+// mid (the band a third of the way up — this is where dusk lives: dusty pink
+// over amber, the nuance a 2-stop gradient can't make), zen (overhead), glow
+// (sun tint) and g (glow strength). Golden hour gets its own keys instead of
+// one long lerp from afternoon into night — that lerp was the "muddy" dusk.
 const SKY_KEYS = [
-  { t: 0.0,  zen: [0.010, 0.016, 0.038], hor: [0.030, 0.042, 0.075], glow: [0.06, 0.07, 0.12], g: 0.15 },
-  { t: 5.4,  zen: [0.028, 0.036, 0.080], hor: [0.240, 0.140, 0.130], glow: [0.95, 0.45, 0.28], g: 0.85 },
-  { t: 7.5,  zen: [0.180, 0.320, 0.560], hor: [0.760, 0.640, 0.560], glow: [1.00, 0.75, 0.45], g: 0.55 },
-  { t: 12.0, zen: [0.230, 0.430, 0.760], hor: [0.700, 0.780, 0.860], glow: [1.00, 0.95, 0.85], g: 0.25 },
-  { t: 17.6, zen: [0.200, 0.330, 0.580], hor: [0.820, 0.640, 0.480], glow: [1.00, 0.70, 0.40], g: 0.65 },
-  { t: 19.6, zen: [0.045, 0.050, 0.110], hor: [0.520, 0.240, 0.180], glow: [1.00, 0.42, 0.24], g: 0.95 },
-  { t: 21.5, zen: [0.012, 0.018, 0.045], hor: [0.055, 0.060, 0.105], glow: [0.20, 0.12, 0.14], g: 0.30 },
-  { t: 24.0, zen: [0.010, 0.016, 0.038], hor: [0.030, 0.042, 0.075], glow: [0.06, 0.07, 0.12], g: 0.15 },
+  // timings LOCKED to the sun geometry (elevation = 62·sin(π(h−6)/12):
+  // sunrise crosses 0° at 6.0, sunset at 18.0) — the old keys ran ~1 h late,
+  // so "sunset colours" painted onto a sun already 14° down = mud.
+  { t: 0.0,  zen: [0.028, 0.042, 0.092], mid: [0.038, 0.055, 0.105], hor: [0.052, 0.070, 0.122], glow: [0.06, 0.07, 0.12], g: 0.15 },
+  { t: 4.9,  zen: [0.030, 0.045, 0.100], mid: [0.055, 0.062, 0.118], hor: [0.150, 0.105, 0.115], glow: [0.45, 0.24, 0.18], g: 0.50 },
+  { t: 5.7,  zen: [0.060, 0.090, 0.190], mid: [0.300, 0.235, 0.320], hor: [0.840, 0.470, 0.220], glow: [1.00, 0.55, 0.28], g: 0.92 },
+  { t: 6.4,  zen: [0.120, 0.190, 0.380], mid: [0.520, 0.430, 0.470], hor: [0.900, 0.600, 0.340], glow: [1.00, 0.68, 0.38], g: 0.75 },
+  { t: 7.5,  zen: [0.180, 0.320, 0.560], mid: [0.460, 0.500, 0.610], hor: [0.760, 0.640, 0.560], glow: [1.00, 0.75, 0.45], g: 0.55 },
+  { t: 12.0, zen: [0.230, 0.430, 0.760], mid: [0.440, 0.580, 0.800], hor: [0.700, 0.780, 0.860], glow: [1.00, 0.95, 0.85], g: 0.25 },
+  { t: 17.2, zen: [0.160, 0.265, 0.500], mid: [0.560, 0.450, 0.470], hor: [0.900, 0.590, 0.300], glow: [1.00, 0.66, 0.33], g: 0.72 },
+  { t: 18.1, zen: [0.085, 0.115, 0.280], mid: [0.500, 0.300, 0.380], hor: [1.000, 0.420, 0.160], glow: [1.00, 0.46, 0.22], g: 1.00 },
+  { t: 18.9, zen: [0.040, 0.056, 0.135], mid: [0.190, 0.150, 0.255], hor: [0.480, 0.210, 0.100], glow: [0.80, 0.33, 0.16], g: 0.65 },
+  { t: 19.9, zen: [0.032, 0.046, 0.100], mid: [0.055, 0.064, 0.115], hor: [0.130, 0.100, 0.135], glow: [0.26, 0.15, 0.15], g: 0.28 },
+  { t: 21.5, zen: [0.028, 0.042, 0.092], mid: [0.038, 0.055, 0.105], hor: [0.052, 0.070, 0.122], glow: [0.06, 0.07, 0.12], g: 0.15 },
+  { t: 24.0, zen: [0.028, 0.042, 0.092], mid: [0.038, 0.055, 0.105], hor: [0.052, 0.070, 0.122], glow: [0.06, 0.07, 0.12], g: 0.15 },
 ];
 function skyAt(hour) {
   let a = SKY_KEYS[0], b = SKY_KEYS[SKY_KEYS.length - 1];
@@ -978,7 +1449,7 @@ function skyAt(hour) {
     if (hour >= SKY_KEYS[i].t && hour <= SKY_KEYS[i + 1].t) { a = SKY_KEYS[i]; b = SKY_KEYS[i + 1]; break; }
   const t = (hour - a.t) / Math.max(0.001, b.t - a.t);
   const tt = t * t * (3 - 2 * t);
-  return { zen: mix3(a.zen, b.zen, tt), hor: mix3(a.hor, b.hor, tt), glow: mix3(a.glow, b.glow, tt), g: lerp(a.g, b.g, tt) };
+  return { zen: mix3(a.zen, b.zen, tt), mid: mix3(a.mid, b.mid, tt), hor: mix3(a.hor, b.hor, tt), glow: mix3(a.glow, b.glow, tt), g: lerp(a.g, b.g, tt) };
 }
 function sunAngles(hour) {
   const elevation = 62 * Math.sin(Math.PI * (hour - 6) / 12);
@@ -993,7 +1464,7 @@ const skyCtx = skyCanvas.getContext("2d");
 // world jumps); the frame loop repaints PROGRESSIVELY via skySteps() — the
 // old all-at-once repaint was a ~100 ms JS stall every few seconds of the
 // day cycle, the single biggest hitch in the app.
-function paintSkyRows(img, y0, y1, hour, spaceBlend = 0) {
+function paintSkyRows(img, y0, y1, hour, spaceBlend = 0, uw = 0) {
   const P = skyAt(hour);
   const { elevation, azimuth } = sunAngles(hour);
   const W = skyCanvas.width, Hh = skyCanvas.height;
@@ -1001,33 +1472,109 @@ function paintSkyRows(img, y0, y1, hour, spaceBlend = 0) {
   const sunU = ((azimuth % 360) + 360) % 360 / 360;
   const sunV = 0.5 - (elevation / 180);
   const dim = 1 - spaceBlend * 0.92;   // ascent: atmosphere thins to near-black
+  // per-planet sky mood (v4's skyTint): VULKAR reads red-hazed, AETHER golden
+  const tint = (PLANET.land && PLANET.land.skyTint) || null;
   // daylight strength (from zenith brightness) so clouds are bright white by day
   // and dark by night, and a cloud tint warmed slightly toward the sun glow.
-  const dayBright = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 0.85, 0.16, 1.05);
+  // night clouds must go DARK (silhouettes over the stars) — the old 0.16
+  // floor kept them pale grey, and their drifting lit edge painted the moving
+  // "white line" glitch on the night horizon
+  const dayBright = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 0.85, 0.05, 1.05);
+  // ── golden-hour cloud palette: real sunset clouds are TWO-TONED — coral/
+  // rose on the sun-fed faces, cool blue-slate in the shadowed bodies — never
+  // a grey brightness ramp (the grey ramp was the "muddy" dusk). duskW peaks
+  // with the sun near the horizon; duskLift keeps lit faces luminous while
+  // the ambient sky dims, exactly like the reference photos.
+  const duskW = clamp(1 - Math.abs(elevation - 1.5) / 13, 0, 1);
+  const duskLift = 1 + duskW * 0.9;
+  const litBase = mix3([0.985, 0.99, 1.0], [P.glow[0], P.glow[1] * 0.92, P.glow[2] * 0.90], duskW * 0.82);
+  // shadow bodies stay LUMINOUS grey-violet (photo reference: even the dark
+  // cloud bellies at dusk hold light) — the first cut crushed them to near-
+  // black, which read muddy/harsh
+  const shadeBase = mix3([0.60, 0.63, 0.72], mix3(P.mid, P.glow, 0.30), 0.42);
+  // ── night sky: stars + moon(s), deterministic so repaints never shimmer ──
+  const nightAmt = clamp(1 - (elevation + 3) / 9, 0, 1);   // full night below −6°
+  const starsOn = nightAmt > 0.03;
+  const mseed = (PLANET.land && PLANET.land.seed ? PLANET.land.seed[0] : 7);
+  const fru = (x) => x - Math.floor(x);
+  const moonN = 1 + (Math.floor(Math.abs(mseed * 1.7)) % 3);   // one to THREE moons per planet
+  const moons = [];
+  for (let mi = 0; mi < moonN; mi++) moons.push({
+    u: fru(mseed * 0.317 + mi * 0.41 + 0.13),
+    // primary moon rides LOW (v 0.28-0.36 → 25-40° up): photogenic near the
+    // horizon and its specular glade stretches long across the water
+    // primary moon rides LOW (13–22° up): a low moon lays a long glade down
+    // the water — a high moon's glint pools uselessly near the horizon point
+    v: (mi === 0 ? 0.375 : 0.20) + (mi === 0 ? 0.055 : 0.09) * fru(mseed * 0.53 + mi * 0.67),
+    s: mi === 0 ? 2900 : mi === 1 ? 12000 : 22000,         // primary LARGE, companions smaller
+    br: mi === 0 ? 1.55 : mi === 1 ? 0.6 : 0.4,
+  });
   const cloudDrift = hour * 0.7;       // slow march across the day
   // smooth altitude fade (0.55→0.9) instead of a hard cutoff, so the painted
   // clouds — and their water reflections — don't pop off on the climb
-  const cloudFade = clamp(1 - (spaceBlend - 0.55) / 0.35, 0, 1);
+  // seen from UNDER the water, the painted cumulus turns into marbled grey
+  // shapes through the surface (the screenshot bug) — the submerged sky keeps
+  // its gradient + sun but drops the cloud paint entirely
+  const cloudFade = clamp(1 - (spaceBlend - 0.55) / 0.35, 0, 1) * clamp(1 - uw, 0, 1);
   const cloudsOn = cloudFade > 0.01;
   for (let y = y0; y < y1; y++) {
     const v = y / (Hh - 1);
     const upness = clamp(1 - v * 2, -1, 1);
-    const zenMix = Math.pow(clamp(upness, 0, 1), 0.62);
-    let base = mix3(P.hor, P.zen, zenMix);
-    if (upness < 0) base = mix3(P.hor, [P.hor[0] * 0.35, P.hor[1] * 0.38, P.hor[2] * 0.42], -upness * 0.9);
+    // 3-stop gradient: hor → mid → zen. The mid band (dusty pink riding over
+    // the amber skyline at dusk, pale blue by day) is the nuance the photos
+    // carry and a 2-stop lerp cannot — colour TEMPERATURE changes with
+    // altitude, not just brightness. This is what un-muddies golden hour.
+    let base;
+    if (upness >= 0) {
+      const a1 = smoothstep(0.0, 0.22, upness);
+      const b1 = smoothstep(0.18, 0.74, Math.pow(upness, 0.85));
+      base = mix3(mix3(P.hor, P.mid, a1), P.zen, b1);
+    } else {
+      // BELOW-horizon rows are what the dome shows in coastline gaps and what
+      // grazing water reflects. Every version that put ANY bright strip here
+      // became "the horizon band" bug (linear falloff, 12% lip, 3.5% hairline
+      // — all read as a colored stripe in some light). FLAT sea-mirror, no
+      // vertical structure at all — but its brightness follows DAYLIGHT: a
+      // midday sea nearly matches the bright sky (a dark mirror drew a dark
+      // line across the noon horizon), while a dusk/night sea goes dark so
+      // no glowing band can ever form against the sunset.
+      const mirrorF = 0.28 + 0.34 * clamp((dayBright - 0.3) / 0.7, 0, 1);
+      base = [P.hor[0] * mirrorF, P.hor[1] * (mirrorF + 0.03), P.hor[2] * (mirrorF + 0.07)];
+    }
     // horizon haze band (v3 mood): warm the low sky toward the sun glow near the
     // skyline for richer atmospheric depth — strong at sunrise/sunset (high P.g),
     // subtle at midday. Fades to nothing well above the horizon.
-    if (upness > -0.03) {
-      const hazeBand = Math.exp(-Math.max(upness, 0) * Math.max(upness, 0) * 24);
+    // dayGate: 1 while the sky is genuinely bright (the approved golden hour),
+    // 0 in deep twilight/dawn — the arch and the bright haze band only belong
+    // to a lit sky; on a dark one they painted muddy maroon + the thin bright
+    // horizon band whose wave-broken reflection was the dashed white line.
+    const dayGate = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 2.4 - 0.22, 0, 1);
+    if (upness > -0.12) {
+      // THE dashed-horizon-line bug lived here: Math.max(upness, 0) clamped
+      // the falloff to FULL strength for every row just below the horizon —
+      // an 8-px bright stripe under the horizon of the equirect. Distant
+      // terrain/waves occluded it intermittently → the "dashed white line".
+      // belowFade melts the glow smoothly below the horizon instead.
+      const belowFade = smoothstep(-0.10, 0.02, upness);
+      const hazeBand = Math.exp(-Math.max(upness, 0) * Math.max(upness, 0) * 24) * belowFade;
       const hazeCol = mix3(P.hor, P.glow, 0.32);
-      base = mix3(base, hazeCol, hazeBand * (0.16 + 0.36 * P.g));
+      // hide-test forensics: the dashed line = the WATER's grazing reflection
+      // of this very band, wave-chopped into dashes. On a bright sky the
+      // reflected band reads as a proper sunset horizon (keep it); on a dark
+      // twilight sky it must go to nearly nothing — dayGate² floor ~0.04.
+      base = mix3(base, hazeCol, hazeBand * (0.16 + 0.36 * P.g) * (0.04 + 0.96 * dayGate * dayGate));
+    }
+    // anti-twilight arch: golden hour only (dayGate) — the painterly layer
+    // real dusks have; never painted onto an already-dark sky
+    if (P.g > 0.35 && upness > 0.04) {
+      const rose = Math.exp(-Math.pow((upness - 0.24) / 0.16, 2)) * (P.g - 0.35) * 0.5 * dayGate;
+      base = mix3(base, [0.66, 0.32, 0.44], rose);
     }
     // cloud vertical envelope: a deck that lives low-to-mid sky and fades to
     // ZERO before the zenith — equirect pinches at the pole, so any cloud near
     // the top smears into radial "rays". Keep it in the upness 0.05..0.5 band.
-    const cloudBand = cloudsOn && upness > 0.02
-      ? smoothstep(0.03, 0.16, upness) * (1 - smoothstep(0.42, 0.80, upness))
+    const cloudBand = cloudsOn && upness > 0.065
+      ? smoothstep(0.07, 0.20, upness) * (1 - smoothstep(0.42, 0.80, upness))
       : 0;
     for (let x = 0; x < W; x++) {
       let du = Math.abs(x / W - sunU); du = Math.min(du, 1 - du);
@@ -1040,6 +1587,49 @@ function paintSkyRows(img, y0, y1, hour, spaceBlend = 0) {
       // per-pixel colour (copy the row's sky base so cloud writes don't leak
       // into the next pixel's gradient)
       let pr = base[0], pg = base[1], pb = base[2];
+      // ── stars + moons: painted BEFORE the clouds so cloud cover occludes
+      // them naturally. Star field is a pure hash of the pixel — identical on
+      // every repaint, so nothing twinkles or crawls.
+      if (starsOn && upness > -0.02) {
+        // ── cell stars: each 6-px cell may own ONE star with its own position,
+        // radius, brightness and warm/cool tint — round multi-pixel points with
+        // magnitude variety instead of the old 1-px threshold grit. A tilted
+        // MILKY WAY band raises density and brightness along its arc.
+        const cs = 6;
+        const cxs = Math.floor(x / cs), cys = Math.floor(y / cs);
+        const mwCenter = 0.30 + 0.13 * Math.sin((x / W) * Math.PI * 2 + mseed);
+        const mwD = (v - mwCenter) / 0.10;
+        const mw = Math.exp(-mwD * mwD);
+        const h0 = hash12(cxs * 12.9898 + mseed, cys * 78.233);
+        if (h0 > 0.915 - mw * 0.075) {
+          const px = (cxs + 0.25 + 0.5 * hash12(cxs + 7.1, cys + 3.3)) * cs;
+          const py = (cys + 0.25 + 0.5 * hash12(cxs - 4.7, cys + 9.2)) * cs;
+          const ddx = x + 0.5 - px, ddy = y + 0.5 - py;
+          const h1 = hash12(cxs * 3.7, cys * 1.9);
+          const rad = 0.42 + h1 * h1 * 0.75;             // sub-pixel points; only the rare bright ones bloom past 1 px
+          const g = Math.exp(-(ddx * ddx + ddy * ddy) / (rad * rad));
+          const bri = (0.26 + 0.74 * h1 * h1) * (0.55 + mw * 0.45) * 0.22
+                    * (1 - clamp((P.g - 0.25) / 0.55, 0, 1));
+          const sAmt = nightAmt * clamp(upness * 3 + 0.4, 0, 1) * g * bri;
+          const warm = hash12(cxs + 57, cys + 91);
+          pr += sAmt * (0.78 + warm * 0.28);
+          pg += sAmt * (0.82 + warm * 0.10);
+          pb += sAmt * (1.02 - warm * 0.24);
+        }
+        // the band itself: a faint cool nebular glow along the arc
+        const mwGlow = mw * nightAmt * clamp(upness * 2.4 + 0.3, 0, 1) * 0.045
+                     * (1 - clamp((P.g - 0.25) / 0.55, 0, 1));
+        pr += mwGlow * 1.05; pg += mwGlow * 1.0; pb += mwGlow * 1.4;
+        for (const mo of moons) {
+          let mdu = Math.abs(x / W - mo.u); mdu = Math.min(mdu, 1 - mdu);
+          const mdv = Math.abs(v - mo.v);
+          // 4× on du² corrects the 2:1 equirect aspect → round discs
+          const disc = Math.exp(-(mdu * mdu * mo.s * 4.2 + mdv * mdv * mo.s));
+          const halo = Math.exp(-(mdu * mdu * mo.s * 0.55 + mdv * mdv * mo.s * 0.13)) * 0.26;
+          const mb = (Math.min(disc, 1) * 1.05 + halo) * mo.br * nightAmt;
+          pr += 0.86 * mb; pg += 0.88 * mb; pb += 0.95 * mb;
+        }
+      }
       // ── clouds (v2 parity): wrap-safe cylinder coords, domain-warped fbm,
       // darker undersides. Painted into the sky so they reflect in the water. ──
       if (cloudBand > 0.001) {
@@ -1052,21 +1642,38 @@ function paintSkyRows(img, y0, y1, hour, spaceBlend = 0) {
         const cz = Math.cos(lon) * proj + cloudDrift * 0.012;
         const wv = fbm(cx * 0.22, cz * 0.22, 3);                         // warp
         const cN = fbm(cx * 0.35 + wv * 0.7, cz * 0.35 + wv * 0.7, 4);   // billows
-        const cov = smoothstep(0.46, 0.72, cN) * cloudBand * cloudFade;
+        // coverage dial: 0 → sparse wisps barely form; 0.45 → the old look;
+        // 1 → heavy overcast, most of the sky claimed by cloud
+        const cc = S.cloudCov !== undefined ? S.cloudCov : 0.45;
+        const lo = 0.62 - 0.50 * cc, hi = lo + 0.26 - 0.10 * cc;
+        const cov = smoothstep(lo, hi, cN) * cloudBand * cloudFade * smoothstep(0.02, 0.10, cc);
         if (cov > 0.001) {
           const under = fbm(cx * 1.5 + wv * 0.7 - 0.35, cz * 1.5 + wv * 0.7 - 0.35, 3);
-          const shade = 0.64 + 0.5 * clamp((cN - under) * 3 + 0.5, 0, 1);   // lit tops
-          const cr = (0.92 * shade + P.glow[0] * sg * 0.5) * dayBright;
-          const cg = (0.93 * shade + P.glow[1] * sg * 0.5) * dayBright;
-          const cb = (0.97 * shade + P.glow[2] * sg * 0.5) * dayBright;
+          const f = clamp((cN - under) * 3 + 0.5, 0, 1);      // 1 = sun-fed face
+          // clouds nearer the sun's azimuth blush hardest (photo behaviour)
+          const sunProx = Math.exp(-du * du * 30);
+          const warmB = 1 + sunProx * duskW * 0.75;
+          const lum = dayBright * (0.80 + 0.20 * f) * duskLift;
+          const cr = lerp(shadeBase[0], litBase[0] * warmB, f) * lum + P.glow[0] * sg * 0.5;
+          const cg = lerp(shadeBase[1], litBase[1] * (1 + sunProx * duskW * 0.30), f) * lum + P.glow[1] * sg * 0.5;
+          const cb = lerp(shadeBase[2], litBase[2], f) * lum + P.glow[2] * sg * 0.5;
           const m = cov * 0.9;
           pr = lerp(pr, cr, m); pg = lerp(pg, cg, m); pb = lerp(pb, cb, m);
         }
       }
       const i = (y * W + x) * 4;
-      d[i]     = clamp((pr * dim + P.glow[0] * sg) * 255, 0, 255);
-      d[i + 1] = clamp((pg * dim + P.glow[1] * sg) * 255, 0, 255);
-      d[i + 2] = clamp((pb * dim + P.glow[2] * sg) * 255, 0, 255);
+      // when the sun sits at/below the horizon, its painted disc lands in the
+      // BELOW-horizon rows — sky no eye ever sees directly, but tilted wave
+      // facets reflect it: the twilight "dashed glints" arc on the far water.
+      // Mask the glow out of the below-horizon rows whenever the sun is low.
+      const sgm = elevation < 2 && upness < 0 ? Math.max(0, 1 + upness * 14) : 1;
+      let or_ = pr * dim + P.glow[0] * sg * sgm;
+      let og_ = pg * dim + P.glow[1] * sg * sgm;
+      let ob_ = pb * dim + P.glow[2] * sg * sgm;
+      if (tint) { or_ *= tint[0]; og_ *= tint[1]; ob_ *= tint[2]; }
+      d[i]     = clamp(or_ * 255, 0, 255);
+      d[i + 1] = clamp(og_ * 255, 0, 255);
+      d[i + 2] = clamp(ob_ * 255, 0, 255);
       d[i + 3] = 255;
     }
   }
@@ -1079,14 +1686,14 @@ function paintSky(hour, spaceBlend = 0) {
 // progressive repaint job: ~28 rows/frame ≈ 2 ms — finishes in ~0.3 s,
 // invisible on the slow day cycle, zero frame spikes
 let skyJob = null;
-function startSkyRepaint(hour, spaceBlend) {
-  skyJob = { hour, spaceBlend, y: 0,
+function startSkyRepaint(hour, spaceBlend, uw = 0) {
+  skyJob = { hour, spaceBlend, uw, y: 0,
              img: skyCtx.createImageData(skyCanvas.width, skyCanvas.height) };
 }
 function stepSkyRepaint(rows = 28) {
   if (!skyJob) return false;
   const y1 = Math.min(skyCanvas.height, skyJob.y + rows);
-  paintSkyRows(skyJob.img, skyJob.y, y1, skyJob.hour, skyJob.spaceBlend);
+  paintSkyRows(skyJob.img, skyJob.y, y1, skyJob.hour, skyJob.spaceBlend, skyJob.uw);
   skyJob.y = y1;
   if (y1 >= skyCanvas.height) {
     skyCtx.putImageData(skyJob.img, 0, 0);
@@ -1103,7 +1710,7 @@ const S = {
   speed: 26, effSpd: 0, altitude: 60, hour: 15.4, auto: true,
   cycle: true, zen: false, hold: false,
   thrustHold: 0, thrust: 0, lastInput: 0,
-  haze: 0.05, density: 0.5, drift: 0.4, tone: 0.6, reverb: 0.65,
+  haze: 0.05, cloudCov: 0.45, density: 0.5, drift: 0.4, tone: 0.6, reverb: 0.65,
   wind: 0.5, level: 0.75, melody: 0.55, musicMode: "auto",
   underwater: 0, waterProx: 0, spaceBlend: 0, warpAmt: 0,
   // space regime
@@ -1166,8 +1773,12 @@ let spaceScene = null, spaceRig = null, sunGlow = null, nearStars = null, warpSt
 // set to 1 at the switch, decays in the frame loop. The terrain loop also
 // pins it to the climb so the final approach to HANDOFF_UP fades to black
 // BEFORE the scene swap instead of popping between skies.
-let screenFade = 0;
+// starts at 1: the very first frames reveal the world through a ~2 s ease
+// from black (the boot crossfade), instead of the scene popping in fully lit
+let screenFade = 1;
 const screenFadeEl = document.getElementById("space-fade");
+const thrustGlowEl = document.getElementById("thrust-glow");
+const warpGradeEl = document.getElementById("warp-grade");
 function driveScreenFade(dt, climb = 0) {
   // slower decay → the reveal on the far side of the handoff eases in gently
   // instead of snapping back from black
@@ -1216,6 +1827,10 @@ function makePlanetTexture(b) {
       r = lerp(r, b.a[0] * 1.5 + 0.05, shelf * 0.5);
       g = lerp(g, b.a[1] * 1.5 + 0.06, shelf * 0.5);
       bl = lerp(bl, b.a[2] * 1.5 + 0.09, shelf * 0.5);
+      // v4 climate bands: warm-tinted equator → cool-tinted poles, on land only
+      const clim = smoothstep(0.25, 0.85, Math.abs(py3));   // 0 equator → 1 pole
+      const cwR = lerp(1.06, 0.86, clim), cwG = lerp(1.0, 0.95, clim), cwB = lerp(0.88, 1.12, clim);
+      r = lerp(r, r * cwR, land); g = lerp(g, g * cwG, land); bl = lerp(bl, bl * cwB, land);
       // cloud swirls: zonally sheared spherical noise — reads as weather bands
       const shear = lon + py3 * 2.6;
       const cnx = Math.sin(shear) * cphi * 2.4 + s0 * 1.7;
@@ -1398,6 +2013,101 @@ function makeNebulaTexture() {
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
+// ── v4 planetary atmosphere shell (TSL) ─────────────────────────────────────
+// Reproduces v4's per-pixel atmosphere: a Fresnel rim (pow 3) plus a razor-thin
+// bright horizon line (pow 9), tinted by the body's atmo colour and brightest
+// on the sun-lit limb. Rendered as a FrontSide additive shell just above the
+// surface — the limb glows, the disc centre contributes nothing, so the planet
+// body reads through cleanly. SOL sits at the origin, so per-fragment sun
+// direction = normalize(-worldPos). Falls back to a plain sprite if TSL throws.
+function makeAtmosphereMaterial(atmo, strength = 1) {
+  const mat = new THREE.MeshBasicNodeMaterial({
+    transparent: true, blending: THREE.AdditiveBlending,
+    depthWrite: false, side: THREE.FrontSide, toneMapped: true,
+  });
+  const N = normalWorld;
+  const V = positionWorld.sub(cameraPosition).normalize();   // camera → fragment
+  const fres = N.dot(V).abs().oneMinus().clamp(0, 1);        // 1 at the limb, 0 at centre
+  const sunDir = positionWorld.negate().normalize();          // toward SOL @ origin
+  const day = N.dot(sunDir).mul(0.7).add(0.32).clamp(0, 1);   // v4: 0.20 + 0.8·diff
+  // rim (broad, pow 3) + horizon line (thin, pow 9), both lit-side weighted
+  const glow = fres.pow(3).mul(0.55).add(fres.pow(9).mul(1.35)).mul(day).mul(strength);
+  mat.colorNode = vec3(atmo[0], atmo[1], atmo[2]).mul(glow);
+  return mat;
+}
+
+// ── v4 planet SURFACES: true 3D noise evaluated at the sphere position ──────
+// v4 ray-traced its planets with fbm3d in the sky shader — no texture mapping
+// at all, which is why its surfaces had zero seams and no polar pinch. The
+// equirect canvas skins could never match that (the "mapping looks off"
+// smearing). These rebuild the same shading as TSL nodes sampled at the
+// sphere point itself: continents, terrain detail, climate bands, polar caps.
+// fbm01: three octaves of MaterialX noise folded into ~[0,1] (v4's fbm3d range)
+function tslFbm01(v, s) {
+  return mx_noise_float(v.mul(s))
+    .add(mx_noise_float(v.mul(s * 2.13)).mul(0.5))
+    .add(mx_noise_float(v.mul(s * 4.41)).mul(0.25))
+    .mul(0.5 / 1.75).add(0.5);
+}
+function makePlanetNodeMaterial(b) {
+  const mat = new THREE.MeshStandardNodeMaterial({ roughness: 1, metalness: 0 });
+  const sd = ((b.land ? b.land.seed[0] : 7) % 97) * 0.37;
+  const p = TSL.positionLocal.div(b.r);                       // unit sphere point
+  const q = p.mul(2.3).add(vec3(sd, sd * 1.31, sd * -0.7));
+  const cont = tslFbm01(q, 1.7);                              // continents
+  const det  = tslFbm01(q, 7.0);                              // terrain detail
+  let land = TSL.mix(vec3(...b.a), vec3(...b.b), tslSmoothstep(0.25, 0.75, det));
+  land = land.mul(tslFbm01(q, 13.0).mul(0.60).add(0.70));     // fine albedo grain
+  land = land.mul(TSL.mix(vec3(1.05, 1.0, 0.90), vec3(0.85, 0.95, 1.10),
+                          tslSmoothstep(0.25, 0.85, p.y.abs())));   // climate bands
+  const oceanC = mix3([0.012, 0.04, 0.085],
+                      [b.atmo[0] * 0.28, b.atmo[1] * 0.28, b.atmo[2] * 0.28], 0.45);
+  const landM = b.water
+    ? tslSmoothstep(0.455, 0.53, cont.add(det.mul(0.08)))
+    : float(1);
+  let surf = TSL.mix(vec3(...oceanC), land, landM);
+  const capAmt = b.water ? 0.75 : 0.18;
+  const capM = tslSmoothstep(0.70, 0.86, p.y.abs().add(det.mul(0.08))).mul(capAmt);
+  surf = TSL.mix(surf, vec3(0.90, 0.93, 0.98), capM);
+  mat.colorNode = surf;
+  return mat;
+}
+function makePlanetCloudNodeMaterial(b) {
+  // cloud shell in TRUE 3D noise as well — the equirect cloud texture was the
+  // last polar-smear offender (broad diagonal streak bands across the ball)
+  const mat = new THREE.MeshStandardNodeMaterial({
+    transparent: true, depthWrite: false, roughness: 1, metalness: 0 });
+  const sd = ((b.land ? b.land.seed[1] : 3) % 89) * 0.41;
+  const p = TSL.positionLocal.div(b.r * 1.015);
+  const q = p.mul(4.2).add(vec3(sd * 1.3, sd * -0.4, -sd));
+  const wv = tslFbm01(q, 2.1);                     // domain warp
+  const cl = tslFbm01(q.add(wv.mul(0.9)), 1.0);    // billows
+  const amt = b.water ? 0.72 : 0.38;               // v4's cAmt: wetter = cloudier
+  mat.colorNode = vec3(0.96, 0.97, 1.0);
+  mat.opacityNode = tslSmoothstep(0.52, 0.72, cl).mul(amt);
+  return mat;
+}
+function makeLavaNodeMaterial(b) {
+  // VULKAR from orbit: dark basalt threaded with bright crack rivers and
+  // molten lowland lakes — emissive, so the night side glows (v4's key cue)
+  const mat = new THREE.MeshStandardNodeMaterial({ roughness: 1, metalness: 0 });
+  const sd = ((b.land ? b.land.seed[0] : 13) % 97) * 0.37;
+  const p = TSL.positionLocal.div(b.r);
+  const q = p.mul(3.1).add(vec3(sd, -sd, sd * 0.6));
+  const cont = tslFbm01(q, 1.6);
+  // v4 balance: the ball is mostly DARK basalt — thin bright crack rivers in
+  // the lowlands, a few rare molten seas in the deepest basins. First cut had
+  // heat everywhere and read as a small sun.
+  const veins = mx_noise_float(q.mul(5.2)).abs().oneMinus().pow(9.0)
+    .mul(tslSmoothstep(0.58, 0.40, cont));
+  const lakes = tslSmoothstep(0.38, 0.30, cont).mul(0.75);
+  const heat = TSL.max(veins, lakes).clamp(0, 1);
+  const rock = TSL.mix(vec3(0.050, 0.030, 0.028), vec3(0.14, 0.09, 0.07), tslFbm01(q, 7.0));
+  mat.colorNode = TSL.mix(rock, vec3(0.24, 0.08, 0.03), heat.mul(0.5));
+  mat.emissiveNode = vec3(1.5, 0.38, 0.05).mul(heat.pow(1.4)).mul(0.95);
+  return mat;
+}
+
 // Build the space scene lazily — it generates a 1024×512 surface texture AND a
 // cloud texture for every planet (~20 heavy canvas loops). Doing that before
 // the first frame was blocking the initial paint (the "black for a few
@@ -1410,8 +2120,10 @@ function makeSpaceRig() {
   spaceRig = new THREE.Group();
   spaceScene.add(spaceRig);
 
-  spaceScene.add(new THREE.AmbientLight(0x556080, 1.05));
-  const sunLight = new THREE.PointLight(0xfff2dd, 2.6, 0, 0);
+  // lower ambient → a real day/night terminator so the atmosphere crescent
+  // reads on the sun-lit limb (v4 look); the sun point light does the modelling
+  spaceScene.add(new THREE.AmbientLight(0x44506e, 0.42));
+  const sunLight = new THREE.PointLight(0xfff2dd, 3.4, 0, 0);
   spaceScene.add(sunLight);
 
   // shared soft radial texture — nebula wisps, planet glows
@@ -1488,17 +2200,27 @@ function makeSpaceRig() {
     nearStars.userData.baseOpacity = 0.9;
     spaceScene.add(nearStars);
 
-    // ── light-speed streaks: one line segment per near-star, its tail trailing
-    // backward along the travel direction. Length + opacity ramp with speed, so
-    // stars stretch into hyperspace stripes during a burn/warp and fade back to
-    // dots when slow. Shares the near-star head positions each frame. ──────────
-    const seg = new Float32Array(N * 2 * 3);
+    // ── v4-style star smear: NO hard line segments. Each star gets a short
+    // trail of soft round glow SAMPLES behind it along the travel direction —
+    // exactly v4's multi-sample starField smear (dots that stretch into soft
+    // luminous streaks under warp, never sharp arcade lines). Each tail sample
+    // carries its star's colour, fading toward the tail. ──────────────────────
+    const TRAIL = 6;
+    const tpos = new Float32Array(N * TRAIL * 3);
+    const tcol = new Float32Array(N * TRAIL * 3);
+    for (let i = 0; i < N; i++)
+      for (let k = 0; k < TRAIL; k++) {
+        const o = (i * TRAIL + k) * 3, f = 1 - k / TRAIL;   // fade along the tail
+        tcol[o] = colArr[i * 3] * f; tcol[o + 1] = colArr[i * 3 + 1] * f; tcol[o + 2] = colArr[i * 3 + 2] * f;
+      }
     const sg = new THREE.BufferGeometry();
-    sg.setAttribute("position", new THREE.BufferAttribute(seg, 3));
-    warpStreaks = new THREE.LineSegments(sg, new THREE.LineBasicMaterial({
-      color: 0xdfe6ff, transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, depthWrite: false }));
+    sg.setAttribute("position", new THREE.BufferAttribute(tpos, 3));
+    sg.setAttribute("color", new THREE.BufferAttribute(tcol, 3));
+    warpStreaks = new THREE.Points(sg, new THREE.PointsMaterial({
+      map: softTex, vertexColors: true, size: 360, sizeAttenuation: true,
+      transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     warpStreaks.frustumCulled = false;
+    warpStreaks.userData.trail = TRAIL;
     warpStreaks.userData.count = N;
     spaceScene.add(warpStreaks);
   }
@@ -1551,12 +2273,19 @@ function makeSpaceRig() {
       mesh.position.set(...b.pos);
       spaceRig.add(mesh);
       b.mesh = mesh;
-      // modest corona — a huge sprite made the sun swallow half the sky
+      // v4 corona: a wide warm glow (g1) + a tighter brighter core (g2)
       sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true,
-        opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
-      sunGlow.scale.setScalar(b.r * 2.8);
+        opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+      sunGlow.material.color.setRGB(1.0, 0.75, 0.45);   // uBodyAtmo for SOL
+      sunGlow.scale.setScalar(b.r * 5.0);
       sunGlow.position.set(...b.pos);
       spaceRig.add(sunGlow);
+      const sunCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true,
+        opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false }));
+      sunCore.material.color.setRGB(1.0, 0.88, 0.62);
+      sunCore.scale.setScalar(b.r * 2.1);
+      sunCore.position.set(...b.pos);
+      spaceRig.add(sunCore);
       continue;
     }
     const col = new THREE.Color(
@@ -1565,15 +2294,22 @@ function makeSpaceRig() {
     if (b.blackhole) {
       mat = new THREE.MeshBasicMaterial({ color: 0x05030a });
     } else if (b.kind === "lava") {
-      const { map, emissive } = makeLavaTexture(b);
-      mat = new THREE.MeshStandardMaterial({ map, emissiveMap: emissive,
-        emissive: 0xffffff, emissiveIntensity: 1.6, roughness: 1, metalness: 0 });
+      // v4-parity 3D-noise surface; equirect texture kept as the fallback
+      try { mat = makeLavaNodeMaterial(b); }
+      catch (e) {
+        const { map, emissive } = makeLavaTexture(b);
+        mat = new THREE.MeshStandardMaterial({ map, emissiveMap: emissive,
+          emissive: 0xffffff, emissiveIntensity: 1.6, roughness: 1, metalness: 0 });
+      }
     } else if (b.kind === "aether") {
       const { map, emissive } = makeAetherTexture(b);
       mat = new THREE.MeshStandardMaterial({ map, emissiveMap: emissive,
         emissive: 0xffffff, emissiveIntensity: 0.95, roughness: 1, metalness: 0 });
     } else {
-      mat = new THREE.MeshStandardMaterial({ map: makePlanetTexture(b), roughness: 1, metalness: 0 });
+      try { mat = makePlanetNodeMaterial(b); }
+      catch (e) {
+        mat = new THREE.MeshStandardMaterial({ map: makePlanetTexture(b), roughness: 1, metalness: 0 });
+      }
     }
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(b.r, 72, 36), mat);
     mesh.position.set(...b.pos);
@@ -1584,22 +2320,39 @@ function makeSpaceRig() {
     // white water-clouds over molten basalt looked wrong; VULKAR's fiery halo
     // and self-lit lava carry its atmosphere read instead)
     if (!b.blackhole && b.kind !== "lava") {
+      let cloudMat;
+      try { cloudMat = makePlanetCloudNodeMaterial(b); }
+      catch (e) {
+        cloudMat = new THREE.MeshStandardMaterial({ map: makePlanetCloudTexture(b), transparent: true,
+          roughness: 1, metalness: 0, depthWrite: false });
+      }
       const cloudMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(b.r * 1.015, 56, 28),
-        new THREE.MeshStandardMaterial({ map: makePlanetCloudTexture(b), transparent: true,
-          roughness: 1, metalness: 0, depthWrite: false }));
+        new THREE.SphereGeometry(b.r * 1.015, 56, 28), cloudMat);
       mesh.add(cloudMesh);
       b.cloudMesh = cloudMesh;
     }
 
-    // atmospheric GLOW: a soft additive halo sprite behind the planet — the
-    // old 1.045r BackSide shell drew a hard-edged solid ring at the limb.
-    const haloOp = b.blackhole ? 0.5 : b.kind === "lava" ? 0.58 : b.kind === "aether" ? 0.52 : 0.42;
+    // ── v4 atmosphere: a Fresnel rim shell on the limb (the crisp bright edge)
+    // + a tight soft outer bloom sprite (v4's exp(-(dmin-R)/(R·0.10)) glow).
+    if (!b.blackhole) {
+      const aStr = b.kind === "lava" ? 1.8 : b.kind === "aether" ? 1.6 : 1.35;
+      try {
+        const shell = new THREE.Mesh(new THREE.SphereGeometry(b.r * 1.055, 48, 24),
+          makeAtmosphereMaterial(b.atmo, aStr));
+        shell.renderOrder = 2;                    // drawn after the body
+        mesh.add(shell);
+      } catch (e) { /* TSL unavailable — the sprite bloom below still gives glow */ }
+    }
+    // tight outer bloom (much smaller than the old 3.1r broad wash → v4's tight
+    // corona rather than a planet-swallowing haze)
+    // v4 glow: a generous additive halo (v4 used ~3.1r) — planets should read
+    // as luminous bodies from across the system, not matte balls
+    const haloOp = b.blackhole ? 0.5 : b.kind === "lava" ? 0.60 : b.kind === "aether" ? 0.52 : 0.46;
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex,
       transparent: true, opacity: haloOp,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     halo.material.color.setRGB(b.atmo[0], b.atmo[1], b.atmo[2]);
-    halo.scale.setScalar(b.r * (b.kind === "lava" ? 3.5 : 3.1));   // fierier corona on VULKAR
+    halo.scale.setScalar(b.r * (b.kind === "lava" ? 3.1 : 2.9));
     halo.renderOrder = -1;              // planet body draws over the core glow
     mesh.add(halo);
 
@@ -1661,6 +2414,10 @@ function enterAtmosphere(body, dir) {
   if (body.blackhole) { enterAfterCity(); return; }
   PLANET = body;
   applyPlanetPalette(body);
+  // per-planet default cloud cover (user can re-dial it on the Clouds knob)
+  S.cloudCov = body.land && body.land.clouds !== undefined ? body.land.clouds : 0.45;
+  if (typeof cloudKnob !== "undefined" && cloudKnob) cloudKnob.set(S.cloudCov, false);
+  lastSkyPaint = -99;                 // repaint the sky for the new cover
   S.mode = "terrain";
   S.launchGrace = 0;
   S.spaceBlend = 0;
@@ -1881,29 +2638,37 @@ function spaceUpdate(dt, now) {
   // dot is the streak's head, so it never disappears: it just grows a tail. ──
   if (warpStreaks && nearStars) {
     const streakN = clamp(S.thrust * 1.35 + S.warpAmt, 0, 1);
-    // CINEMATIC ramp: ease very slowly (~2-3 s to full) so streaks build like a
-    // real jump-to-lightspeed instead of snapping on. Down-ease is a touch
-    // faster so they always relax back to dots (no stuck streaks).
+    // responsive ramp: the stretch answers the thruster within ~0.4 s (the
+    // old 0.9/s "cinematic" build felt disconnected from the ⌘ key), and
+    // relaxes back to clean dots a touch faster when you ease off.
     const target = S._streak || 0;
-    const rate = streakN > target ? 0.9 : 1.6;
+    const rate = streakN > target ? 2.6 : 1.9;
     S._streak = target + (streakN - target) * Math.min(1, dt * rate);
     const sN = S._streak;
     warpStreaks.visible = sN > 0.02;
-    // softer + deeper: lower peak opacity so streaks read as luminous depth,
-    // not hard arcade lines; the glowing dot heads (nearStars) stay full opacity
-    warpStreaks.material.opacity = sN * sN * 0.6;
+    // smear shows early and grows with the burn; dot heads stay full-bright
+    warpStreaks.material.opacity = Math.pow(sN, 1.4) * 0.95;
+    // v4 brightness ramp: heads glow brighter the faster you go (s1 *= 1+L·2.4)
+    nearStars.material.opacity = (nearStars.userData.baseOpacity || 0.9) * (1 + sN * 1.6);
     if (warpStreaks.visible) {
-      const len = sN * sN * sN * 30000;               // stays dots longer, then stretches deep
+      const len = sN * sN * 34000;                    // visible stretch as soon as the burn starts
+      const TR = warpStreaks.userData.trail;
       const hp = nearStars.geometry.attributes.position.array;
       const sp = warpStreaks.geometry.attributes.position.array;
       const n = warpStreaks.userData.count;
-      const tx = mv[0] * len, ty = mv[1] * len, tz = mv[2] * len;
       for (let i = 0; i < n; i++) {
-        const h = i * 3, s = i * 6;
-        sp[s]     = hp[h];      sp[s + 1] = hp[h + 1];      sp[s + 2] = hp[h + 2];        // head = the star
-        sp[s + 3] = hp[h] - tx; sp[s + 4] = hp[h + 1] - ty; sp[s + 5] = hp[h + 2] - tz;   // tail behind
+        const h = i * 3;
+        const hx = hp[h], hy = hp[h + 1], hz = hp[h + 2];
+        for (let k = 0; k < TR; k++) {
+          // samples march backward along the travel vector — soft glowing dots
+          // that overlap into a luminous streak, never a hard line
+          const f = (k + 1) / TR * len, o = (i * TR + k) * 3;
+          sp[o] = hx - mv[0] * f; sp[o + 1] = hy - mv[1] * f; sp[o + 2] = hz - mv[2] * f;
+        }
       }
       warpStreaks.geometry.attributes.position.needsUpdate = true;
+    } else {
+      nearStars.material.opacity = nearStars.userData.baseOpacity || 0.9;
     }
   }
 
@@ -2014,7 +2779,8 @@ function flightUpdate(dt, now) {
 
 // ── boot ─────────────────────────────────────────────────────────────────────
 const PRESETS = ["dusk", "sunset", "blackFlag", "seaOfThieves", "arctic", "storm", "moonlit"];
-let water = null, sky = null, skyTex = null, lastSkyPaint = -99, lastSkyBlend = 0;
+let water = null, sky = null, skyTex = null, lastSkyPaint = -99, lastSkyBlend = 0, lastSkyUw = 0, lastPmremBake = -9;
+let hemiBase = null;   // preset's hemisphere intensity, captured on first frame after load
 
 // ── underwater look settings (driven by the Underwater panel) ─────────────────
 let currentWaterParams = null;
@@ -2045,6 +2811,7 @@ function loadWaterPreset(name) {
   currentWaterParams = getPresetParams(name);
   applyUnderwaterToParams();
   if (water) water.loadPreset(currentWaterParams);
+  hemiBase = null;   // re-capture the new preset's hemisphere base next frame
 }
 function applyUnderwater() {
   applyUnderwaterToParams();
@@ -2064,7 +2831,7 @@ async function main() {
   // heavy, recover when there's headroom. setPixelRatio reallocates render
   // targets, so we only call it when the ratio actually steps (never per frame).
   const DPR_CAP = Math.min(devicePixelRatio, 1.25);
-  const DPR_MIN = 0.75;
+  const DPR_MIN = 0.62;
   let curDPR = DPR_CAP;
   let dprEMA = 16;          // smoothed frame time (ms)
   let dprHold = 0;          // frames to wait before the next step
@@ -2094,14 +2861,40 @@ async function main() {
   // suburb reads better and costs ~nothing (InfiniHousePool kept in the file
   // as an opt-in, but no longer the default).
   const houses = new HousePool(scene);
-  // The billboards ARE the fly-through layer (you rise up into them like v4).
-  // The fix vs v4 isn't removing them — it's making them read as flat soft
-  // stratus SHEETS instead of 3D cotton-balls (see the flattened sprite scale
-  // + softened texture in CloudField/makeCloudTexture).
-  const clouds = new CloudField(scene, 14);
+  // Clouds are now a live altitude-projected dome (v4 technique), not billboards.
+  // v4 altitude-projected cloud dome — implemented but UNVERIFIED (this session
+  // could not render the app to test it; see handoff). Gated OFF by default so
+  // its TSL (which compiles at first render, past any try/catch) can't blank the
+  // app. Set window.__CLOUDS = true BEFORE Begin to enable + verify.
+  let cloudDome = null;
+  if (window.__CLOUDS === true) {
+    try { cloudDome = makeCloudDome(); scene.add(cloudDome); }
+    catch (e) { console.warn("CLOUD DOME FAILED:", e.message); window.__cloudErr = e.message; }
+  }
+  // Volumetric sprite CLUSTERS, not a textured plane: the CloudDeck's 60 km
+  // repeat-6 plane showed obvious tile seams and read as exactly what it was —
+  // a thin sheet with a map. CloudField builds each cloud as a 3-tier stack
+  // (shaded base slab / tall lobes / sunlit caps) with intra-cloud parallax;
+  // sprites cannot tile, so there is nothing to seam.
+  // 12 clusters (was 18): each cluster is 4-6 BIG transparent sprites, and
+  // that overdraw was one of the largest GPU line items. 12 still fills the
+  // sky; the TSL dome + painted equirect carry the rest of the cover.
+  // 9 clusters: huge stacked transparent sprites are pure fill-rate — at 12+
+  // clusters the horizon view stacked enough overdraw to drag the whole frame
+  const clouds = new CloudField(scene, 9);
+  const nightStars = new NightStars(scene);
+  // HorizonVeil RETIRED (2026-07-07, user call): the 26 km curtain read as a
+  // colored band across the horizon (worse than the seam it hid) and cost a
+  // canvas readback + full vertex-color re-upload every 0.5 s plus a screen-
+  // wide transparent strip of overdraw every frame. The class stays above for
+  // reference; nothing instantiates it.
+  const plankton = new NightPlankton(scene);
 
   // ── the water — every drop of it is threejs-water-pro ──
-  water = await WaterSystem.create(renderer, scene, camera, "high");
+  // "medium" water: the single biggest perf lever in the app (the "high" FFT
+  // spectrum + passes were the frame budget's largest slice). Visually close;
+  // flip back to "high" here if you want max fidelity on a strong GPU.
+  water = await WaterSystem.create(renderer, scene, camera, "medium");
   setLoad(62);
   loadWaterPreset("dusk");
   // our terrain is the real seabed — sink the library's procedural floor
@@ -2190,7 +2983,7 @@ async function main() {
     if (rawMs < 100) dprEMA += (rawMs - dprEMA) * 0.1;   // ignore tab-switch spikes
     if (dprHold > 0) dprHold--;
     else if (dprEMA > 21 && curDPR > DPR_MIN) {
-      curDPR = Math.max(DPR_MIN, curDPR - 0.1); renderer.setPixelRatio(curDPR); dprHold = 45;
+      curDPR = Math.max(DPR_MIN, curDPR - 0.15); renderer.setPixelRatio(curDPR); dprHold = 40;
     } else if (dprEMA < 13.5 && curDPR < DPR_CAP) {
       curDPR = Math.min(DPR_CAP, curDPR + 0.05); renderer.setPixelRatio(curDPR); dprHold = 90;
     }
@@ -2198,9 +2991,18 @@ async function main() {
     // day/night cycle (terrain only, matches v2 pace: 24 h in 10 min)
     if (S.cycle && S.mode === "terrain") {
       S.hour = (S.hour + dt * 24 / 2200) % 24;   // slower day: ~37 min per cycle
-      renderTime();
+      // DOM clock write only when the displayed minute actually changes
+      const mm = Math.floor(S.hour * 60);
+      if (mm !== S._lastMin) { S._lastMin = mm; renderTime(); }
     }
     moonUpdate(dt);
+
+    // v4 thrust vignette + warp grade overlays (both regimes)
+    if (thrustGlowEl) thrustGlowEl.style.opacity = Math.min(0.85, (S.thrust || 0) * 0.9).toFixed(3);
+    if (warpGradeEl) {
+      const w = S.mode === "space" ? Math.max(S.warpAmt || 0, (S._streak || 0)) : 0;
+      warpGradeEl.style.opacity = (w * 0.8).toFixed(3);
+    }
 
     if (S.mode === "space") {
       spaceUpdate(dt, now);
@@ -2217,31 +3019,150 @@ async function main() {
     // (water animates, sky lives) but the camera holds its spawn vantage.
     if (S.started) flightUpdate(dt, now);
     // fade to black over the last stretch of the climb so the space handoff
-    // never pops between two skies
-    driveScreenFade(dt, clamp((S.spaceBlend - 0.78) / 0.22, 0, 1));
+    // never pops between two skies. The window is wide and reaches FULL black
+    // by spaceBlend ≈ 0.93 — comfortably before the scene swap at 1.0 — so no
+    // frame of the swap (kinematics reset, camera near/far switch, sky
+    // exchange) is ever visible. Eased (t²·smooth) so the fade breathes in
+    // instead of ramping linearly.
+    {
+      const t = clamp((S.spaceBlend - 0.58) / 0.35, 0, 1);
+      driveScreenFade(dt, t * t * (3 - 2 * t));
+    }
     inner.update(S.x, S.z);
     outer.update(S.x, S.z);
     houses.update(!!PLANET.land.city, S.x, S.z);
-    clouds.update(dt, S.x, S.z, S.camY, S.hour, S.spaceBlend, S.underwater < 0.5);
+    // ── cloud visibility is INSTANT and GEOMETRIC: camY vs the waterline.
+    // The old gate (smoothed S.underwater ramp) kept clouds hidden for ~1 s
+    // after surfacing — the "clouds gone for a second" glitch. The billboard
+    // sprites + dome still hide while genuinely under (they looked marbled
+    // through the surface), but they flip exactly at the crossing frame, in
+    // both directions, so the sky above water is never missing its clouds.
+    const subNow = PLANET.land.waterLvl > -1e5 && S.camY < PLANET.land.waterLvl;
+    clouds.update(dt, S.x, S.z, S.camY, S.hour, S.spaceBlend, !subNow, S.cloudCov);
+    // altitude-projected cloud dome — follows the camera, fades out in space/underwater
+    if (cloudDome) cloudDome.position.copy(camera.position);
+    uCloudTime.value += dt;
+    uCloudHaze.value = S.haze;
+    uCloudDry.value = (1 - clamp(S.spaceBlend, 0, 1)) * (subNow ? 0 : 1)
+                    * clamp((S.cloudCov !== undefined ? S.cloudCov : 0.45) * 6, 0, 1);
+    uCloudCov.value = S.cloudCov !== undefined ? S.cloudCov : 0.45;
+    try { uCloudSunDir.value.copy(water.lighting.sun.direction).normalize(); } catch (e) {}
+    try {
+      const Pc = skyAt(S.hour);
+      const dc = Pc && Pc.zen ? clamp((Pc.zen[0] + Pc.zen[1] + Pc.zen[2]) * 0.4, 0.25, 1.12) : 0.9;
+      uCloudTint.value.set(dc, dc, dc * 1.02);
+      if (Pc && Pc.glow) uCloudSunCol.value.set(Pc.glow[0], Pc.glow[1], Pc.glow[2]);
+    } catch (e) {}
 
     // sun + sky follow the clock; the water's light, sparkle, reflections
     // and the sky dome all read from the same uniforms
     const { elevation, azimuth } = sunAngles(S.hour);
-    water.lighting.sun.update({
-      azimuth,
-      elevation: Math.max(elevation, -12),
-      intensity: clamp(0.12 + smoothstep(-6, 30, elevation) * 1.15, 0.1, 1.3) * (1 - S.spaceBlend * 0.5),
-      diskColor: elevation < 12 ? "#ffcf9e" : "#fff6e0",
-    });
-    if (!skyJob && (Math.abs(S.hour - lastSkyPaint) > 0.06 || Math.abs(S.spaceBlend - lastSkyBlend) > 0.04)) {
-      startSkyRepaint(S.hour, S.spaceBlend);
-      lastSkyPaint = S.hour; lastSkyBlend = S.spaceBlend;
+    // electro-plankton: alive at night, near or under real water only
+    {
+      const nightA = clamp(1 - (elevation + 3) / 9, 0, 1) * (1 - clamp(S.spaceBlend, 0, 1));
+      const nearWater = PLANET.land.waterLvl > -1e5 ? clamp(1 - S.camY / 90, 0, 1) : 0;
+      // electro-plankton RETIRED (2026-07-06, user call): the procedural
+      // patches read as glitchy/inconsistent — night-ocean light now comes
+      // from the moon. Pass 0 so every plankton element stays dark/hidden.
+      plankton.update(now, S.x, S.z, 0, 0);
+      nightStars.update(camera.position, nightA, S.spaceBlend, skyAt(S.hour).g);
     }
-    if (stepSkyRepaint()) skyTex.needsUpdate = true;
+    // ── night: the MOON takes over as the water's light source — a cool dim
+    // key light at the painted moon's sky position, so the sea carries a real
+    // moonglade (specular path) instead of going pitch black. The handoff
+    // happens deep in twilight where the sun is already at its 0.03 floor, so
+    // the source swap is invisible.
+    const nightW = clamp((-elevation - 2) / 8, 0, 1);
+    if (nightW > 0.6) {
+      const mseedL = (PLANET.land && PLANET.land.seed ? PLANET.land.seed[0] : 7);
+      const fruL = (x) => x - Math.floor(x);
+      const moonU = fruL(mseedL * 0.317 + 0.13);
+      const moonV = 0.375 + 0.055 * fruL(mseedL * 0.53);   // matches the painted primary moon (low sky)
+      water.lighting.sun.update({
+        azimuth: moonU * 360,
+        elevation: clamp((0.5 - moonV) * 180, 12, 22),
+        // low moon + 0.42: a long visible glade down the water, while
+        // snow/terrain stay night-dark
+        intensity: 0.42 * nightW * (1 - S.spaceBlend * 0.5),
+        diskColor: "#d9e6ff",
+      });
+    } else {
+      water.lighting.sun.update({
+        azimuth,
+        elevation: Math.max(elevation, -12),
+        // night floor 0.03: the dark-sea base the moon key light sits on
+        intensity: clamp(0.03 + smoothstep(-6, 30, elevation) * 1.24, 0.03, 1.3) * (1 - S.spaceBlend * 0.5),
+        diskColor: elevation < 12 ? "#ffcf9e" : "#fff6e0",
+      });
+    }
+    // sky repaint scheduling. Three situations demand a much faster repaint
+    // than the idle day-cycle drip (28 rows ≈ 18 frames):
+    //   · dragging the time slider — the sky must chase the thumb or the
+    //     track feels broken (the v4 slider was instant; this is our match)
+    //   · the ascent — spaceBlend darkens the paint, and a lagging repaint
+    //     made the climb dim in visible steps (the "jerky" handoff)
+    //   · crossing the waterline — the submerged sky drops its cloud paint
+    // uwSky retired: the painted sky KEEPS its clouds underwater (seeing the
+    // cloudscape through the surface from below is realistic), so crossings
+    // trigger no repaint at all — the repaint latency was the other half of
+    // the "clouds gone for a second" glitch, and skipping it saves the
+    // urgent-repaint + PMREM-rebake spike right at the splash moment.
+    const uwSky = 0;
+    const skyDelta = Math.abs(S.hour - lastSkyPaint);
+    const sbDelta = Math.abs(S.spaceBlend - lastSkyBlend);
+    // urgent = must chase the user (slider drag, big jump, waterline). The
+    // ascent is deliberately NOT urgent: a 0.02-blend threshold at 128 rows
+    // meant near-continuous full-speed repainting during the whole climb —
+    // the residual "choppy transition" was those paint spikes. The climb now
+    // repaints lazily (the DOM black fade owns the final darkening anyway).
+    const urgent = timeDrag || skyDelta > 0.5 || uwSky !== lastSkyUw;
+    // a stale in-flight job chasing an old hour gets replaced, not awaited —
+    // this is what makes scrubbing the slider track feel continuous
+    if (skyJob && (Math.abs(skyJob.hour - S.hour) > 0.35 || skyJob.uw !== uwSky)) skyJob = null;
+    if (!skyJob && (urgent || skyDelta > 0.06 || sbDelta > 0.08)) {
+      startSkyRepaint(S.hour, S.spaceBlend, uwSky);
+      lastSkyPaint = S.hour; lastSkyBlend = S.spaceBlend; lastSkyUw = uwSky;
+    }
+    if (stepSkyRepaint(urgent ? 128 : S.spaceBlend > 0.01 ? 64 : 28)) {
+      skyTex.needsUpdate = true;
+      // CRITICAL: re-bake the water's PMREM reflection environment. The
+      // library bakes it ONCE from the equirect — without this the sea keeps
+      // reflecting whatever sky it was born with (a bright day at midnight,
+      // and reflections that never chased the time slider). Rate-limited: the
+      // bake is a real GPU job, and while the cycle drips repaints (or the
+      // slider scrubs) baking on EVERY completion stacked visible hitches.
+      if (now - (lastPmremBake || -9) > 1.5) {
+        lastPmremBake = now;
+        try { sky.uploadSource(renderer); } catch (e) {}
+      }
+    }
     // fog tracks the horizon colour; HAZE pulls it closer, ascent thins it out
     {
       const P = skyAt(S.hour);
-      scene.fog.color.setRGB(P.hor[0], P.hor[1], P.hor[2]);
+      const ft = (PLANET.land && PLANET.land.skyTint) || [1, 1, 1];
+      // fog color must never be BRIGHTER than the sky behind it: at twilight
+      // the raw horizon colour outshines the darkened sky dome, so heavily
+      // fogged distant ridges converged toward a LUMINOUS colour — the last
+      // ingredient of the dashed-horizon-line bug. Dim fog with the sky.
+      const fogDG = clamp((P.zen[0] + P.zen[1] + P.zen[2]) * 2.4 - 0.22, 0, 1);
+      // sun-elevation gate: haze brightness must die WITH the sun, not with
+      // the zenith — a zenith-based gate alone left far ridges fogged bright
+      // cream after sundown (the pale jagged "cutout" band behind the peaks)
+      const sunGate = clamp(0.22 + smoothstep(-13, 8, elevation) * 0.78, 0.22, 1);
+      const fmul = (0.15 + 0.85 * fogDG) * sunGate;
+      // THE "mountains get brighter as the sun sets" bug: the water preset's
+      // hemisphere light is a CONSTANT warm 0.34 — as the sky and fog dimmed
+      // around it, the ambient-lit peaks read as glowing brighter. Chain the
+      // hemisphere to the sun's own elevation (proved live: dimming this
+      // light is what finally lets the mountains fall into dusk).
+      try {
+        const hemi = water.lighting._hemisphereLight;
+        if (hemi) {
+          if (hemiBase === null) hemiBase = hemi.intensity;
+          hemi.intensity = hemiBase * (0.10 + 0.90 * smoothstep(-10, 20, elevation));
+        }
+      } catch (e) {}
+      scene.fog.color.setRGB(P.hor[0] * ft[0] * fmul, P.hor[1] * ft[1] * fmul, P.hor[2] * ft[2] * fmul);
       const thin = 1 + S.spaceBlend * 5;
       let near = (1400 - S.haze * 1100) * thin;
       let far  = (17000 - S.haze * 9000) * thin;
@@ -2255,14 +3176,45 @@ async function main() {
         // stays close to the horizon colour (never near-white), and the fog
         // only draws in modestly. Passing the deck now reads as a soft misting,
         // not the abrupt "flash of white at altitude".
-        const w = pa * pa * 0.5;
+        // Immersive but GRADUAL: pa² ramps smoothly over the ~220 m deck so it
+        // envelops you like flying through cloud, never the abrupt "flash". At
+        // the dense core you're wrapped in soft white with short view distance.
+        const w = pa * pa * 0.92;
         scene.fog.color.setRGB(
-          lerp(P.hor[0], 0.72 * day, w), lerp(P.hor[1], 0.76 * day, w), lerp(P.hor[2], 0.82 * day, w));
-        near = lerp(near, 360, w);
-        far  = lerp(far, 3200, w);
+          lerp(P.hor[0], 0.85 * day, w), lerp(P.hor[1], 0.88 * day, w), lerp(P.hor[2], 0.93 * day, w));
+        near = lerp(near, 90, w);
+        far  = lerp(far, 1150, w);
+      }
+      // ── night fog pull-in: THE "dashed white horizon line" (scene-bisect
+      // verified) was the farthest tile ring's SNOW CAPS catching the night
+      // key light while nearer terrain sat dark — floating bright strokes at
+      // the horizon. At night the fog draws in hard so distant ridges melt
+      // into the dark instead of glinting above it.
+      {
+        const nW = clamp((-elevation - 2) / 8, 0, 1);
+        near *= 1 - 0.55 * nW;
+        far  *= 1 - 0.85 * nW;
       }
       scene.fog.near = near;
       scene.fog.far = far;
+      // the water library's OWN atmospheric fog carries a fixed preset colour
+      // (peach for "dusk") — at night it painted the glowing horizon line and
+      // a warm wash on the sea. Chain it to the same palette as scene.fog.
+      try {
+        const fc = water.atmosphericFogPass._color;
+        const c = fc && fc.value ? fc.value : fc;
+        if (c && c.setRGB) c.setRGB(scene.fog.color.r, scene.fog.color.g, scene.fog.color.b);
+        // THE HORIZON BAND FIX: the fog pass "sky-blends" every pixel beyond
+        // ~5.4 km toward a BLURRED sky sample. Around the horizon that sample
+        // is the bright skyline smeared downward, so all far terrain in the
+        // horizon strip was repainted as a hard glowing band that cut through
+        // mountains (worst at dusk, when the skyline is at max brightness vs
+        // dark land). Verified live: pushing the blend distance out of reach
+        // restores true silhouettes. Enforced per-frame because loadPreset
+        // resets it. scene.fog + our palette fog colour own the atmosphere.
+        const sbd = water.atmosphericFogPass._skyBlendDistance;
+        if (sbd && sbd.value !== undefined) sbd.value = 1e8;
+      } catch (e) {}
     }
 
     // caustics drive: strongest submerged, softly present near the surface
@@ -2283,6 +3235,9 @@ async function main() {
       sceneReady = true;
       setLoad(100);
       // let the bar visibly reach 100%, THEN fade the environment in (not abrupt)
+      // — and re-arm the black overlay so the world crossfades in over ~2 s in
+      // sync with the splash lifting, instead of popping in fully lit
+      screenFade = 1;
       setTimeout(() => document.getElementById("start")?.classList.add("ready"), 320);
       const warm = () => ensureSpaceRig();
       if (window.requestIdleCallback) requestIdleCallback(warm, { timeout: 2500 });
@@ -2434,6 +3389,10 @@ const fmtAltKnob = v => v < 1000 ? Math.round(v) + " m" : (v / 1000).toFixed(v <
 makeKnob(document.getElementById("sec-flight"), { key: "speed", label: "Speed", min: 6, max: 80, def: 26, fmt: v => Math.round(v) + " m/s" });
 const altKnob = makeKnob(document.getElementById("sec-flight"), { key: "altitude", label: "Altitude", min: 25, max: 60000, def: 60, fmt: fmtAltKnob, curve: "log" });
 makeKnob(document.getElementById("sec-atmos"), { key: "haze", label: "Haze", min: 0, max: 1, def: 0.05, fmt: pct });
+// cloud-cover dial: 0 = bare sky (VULKAR default), 1 = heavy overcast — drives
+// the painted-sky deck, the parallax dome and the billboard clusters together
+const cloudKnob = makeKnob(document.getElementById("sec-atmos"), { key: "cloudCov", label: "Clouds", min: 0, max: 1, def: 0.45, fmt: pct,
+  onSet: () => { lastSkyPaint = -99; } });
 makeKnob(document.getElementById("sec-engine"), { key: "density", label: "Density", min: 0, max: 1, def: 0.5, fmt: pct });
 makeKnob(document.getElementById("sec-engine"), { key: "melody", label: "Melody", min: 0, max: 1, def: 0.55, fmt: pct });
 makeKnob(document.getElementById("sec-engine"), { key: "drift", label: "Drift", min: 0, max: 1, def: 0.4, fmt: pct });

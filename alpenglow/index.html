@@ -174,7 +174,10 @@ body.zen .hud, body.zen #deck, body.zen #music-panel { opacity: 0; pointer-event
 .load-bar { width: 190px; height: 2px; margin-top: 14px; border-radius: 2px; overflow: hidden;
   background: rgba(255,255,255,0.11); transition: opacity 0.7s ease; }
 .load-fill { width: 0%; height: 100%; border-radius: 2px; background: var(--alpen);
-  box-shadow: 0 0 8px rgba(255,157,138,0.6); transition: width 0.45s cubic-bezier(0.4,0,0.2,1); }
+  box-shadow: 0 0 8px rgba(255,157,138,0.6);
+  /* long gentle glide between the discrete load milestones — the bar creeps
+     smoothly left→right instead of snapping between jumps */
+  transition: width 2.2s cubic-bezier(0.22, 0.6, 0.36, 1); }
 .start-card { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; padding: 40px; }
 .start-card svg.zmark { width: 54px; height: 54px; color: #fff; filter: drop-shadow(0 8px 30px rgba(0,0,0,0.5)); }
 .start-eyebrow { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.38); }
@@ -216,6 +219,14 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
 <body>
 
 <div id="vignette"></div>
+<!-- v4 thrust vignette: warm glow rising from screen-bottom while ⌘-thrusting -->
+<div id="thrust-glow" style="position:fixed; inset:0; pointer-events:none; z-index:3; opacity:0;
+  background:radial-gradient(ellipse 120% 70% at 50% 118%, rgba(255,206,140,0.55), rgba(255,150,90,0.12) 42%, transparent 66%);
+  transition:opacity 0.12s linear;"></div>
+<!-- v4 warp grade: cool edge tint + slight pull-in while the drive is pushing -->
+<div id="warp-grade" style="position:fixed; inset:0; pointer-events:none; z-index:3; opacity:0;
+  background:radial-gradient(ellipse 90% 90% at 50% 50%, transparent 34%, rgba(120,150,255,0.16) 78%, rgba(70,95,200,0.34) 100%);
+  transition:opacity 0.2s linear;"></div>
 <!-- black bridge for the atmosphere⇄space scene handoff -->
 <div id="space-fade" style="position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:5;"></div>
 
@@ -355,6 +366,17 @@ body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
     document.getElementById('start')?.classList.add('gone');
   });
 </script>
-<script type="module" src="./src/main.js?v=20260705l"></script>
+<script>
+  window.__err = [];
+  window.addEventListener('error', e => { window.__err.push(String(e.message || e.error)); });
+  window.addEventListener('unhandledrejection', e => { window.__err.push('REJECT: ' + String(e.reason && (e.reason.stack || e.reason.message || e.reason))); });
+</script>
+<script>
+// dev-only: ?shim keeps the sim running in a hidden tab (rAF -> setTimeout),
+// used by headless verification. No effect without the query flag.
+if (new URLSearchParams(location.search).has("shim"))
+  window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 33);
+</script>
+<script type="module" src="./src/main.js?v=20260707h"></script>
 </body>
 </html>
