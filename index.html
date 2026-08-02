@@ -1,193 +1,383 @@
-<!DOCTYPE html>
+<!doctype html>
+<!--
+  ALPENGLOW 3.0 AQUA — Zylo Instruments
+  Three.js WebGPU + threejs-water-pro water. UI restored 1:1 from the v2
+  control deck (knobs / chips / nav / time track), plus a WATER preset
+  selector for the library's sea states. v2.html = previous WebGL2 build.
+-->
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zylo — Professional Audio Plugins</title>
-  <meta name="description" content="Zylo crafts professional-grade synthesis and effects plugins for producers and sound designers who demand depth.">
-  <link rel="stylesheet" href="css/styles.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="/alpenglow/">
+<title>ALPENGLOW — Zylo Instruments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fg:         #f2f2f0;
+  --fg-muted:   rgba(255,255,255,0.55);
+  --border:     rgba(255,255,255,0.10);
+  --alpen:      #ff9d8a;
+  --r-sharp:  2px;
+  --r-panel:  16px;
+  --r-pill:   999px;
+  --font:         'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Syne', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'SF Mono', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; background: #05060a; }
+body { font-family: var(--font); color: var(--fg); user-select: none; -webkit-user-select: none; }
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+canvas:active { cursor: grabbing; }
+
+#vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(0,0,0,0.32) 100%); }
+
+/* ══════════ HUD ══════════ */
+.hud { position: fixed; z-index: 10; transition: opacity 0.6s ease; }
+body.zen .hud, body.zen #deck, body.zen #music-panel { opacity: 0; pointer-events: none; }
+
+#hud-brand { top: 22px; left: 26px; display: flex; align-items: center; gap: 14px; }
+#hud-brand svg { width: 26px; height: 26px; color: var(--fg); opacity: 0.92; }
+.brand-stack .product { font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg); line-height: 1; }
+.brand-stack .maker { font-family: var(--font-mono); font-size: 7.5px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(255,255,255,0.34); margin-top: 5px; }
+
+#hud-flight { top: 74px; left: 26px; display: flex; flex-direction: column; gap: 6px; }
+.readout { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: rgba(255,255,255,0.55); display: flex; gap: 8px; align-items: baseline; }
+.readout b { color: var(--fg); font-weight: 500; min-width: 74px; display: inline-block; }
+.readout .lbl { font-size: 7.5px; letter-spacing: 0.2em; color: rgba(255,255,255,0.30); width: 34px; }
+#ro-mode { color: var(--alpen) !important; }
+
+#hud-nav { bottom: 156px; left: 26px; display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
+.nav-row { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: rgba(255,255,255,0.42); }
+.nav-row b { color: rgba(255,255,255,0.8); font-weight: 500; }
+.nav-row.aim b { color: var(--alpen); }
+.nav-row[data-b] { cursor: pointer; }
+.nav-head { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.26); margin-bottom: 2px; }
+
+#hud-right { top: 22px; right: 26px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+#clock { font-family: var(--font-mono); font-size: 20px; font-weight: 500; letter-spacing: 0.1em; color: var(--fg); text-shadow: 0 2px 12px rgba(0,0,0,0.4); }
+#chord { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+#chord b { color: var(--alpen); font-weight: 500; }
+
+.chips { display: flex; gap: 6px; }
+.chip { padding: 5px 11px; border-radius: var(--r-pill); font-family: var(--font-mono); font-size: 8px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.12); background: rgba(10,10,12,0.4);
+  color: rgba(255,255,255,0.45); cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s; }
+.chip:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.25); }
+.chip.on { background: rgba(255,157,138,0.12); border-color: rgba(255,157,138,0.4); color: var(--alpen); }
+
+#toast { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); z-index: 40;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase;
+  color: rgba(255,255,255,0.85); text-shadow: 0 2px 20px rgba(0,0,0,0.6);
+  opacity: 0; transition: opacity 1.1s ease; pointer-events: none; white-space: nowrap; }
+#toast.show { opacity: 1; }
+
+#hint { position: fixed; bottom: 156px; left: 50%; transform: translateX(-50%); z-index: 9;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,0.30); pointer-events: none; transition: opacity 1.5s; white-space: nowrap; }
+
+/* ══════════ MUSIC PANEL ══════════ */
+#music-panel { position: fixed; z-index: 14; top: 112px; right: 26px; width: 214px; padding: 11px;
+  display: none; grid-template-columns: 1fr 1fr; gap: 8px;
+  background: rgba(9,9,11,0.70); border: 1px solid rgba(255,255,255,0.10); border-radius: 10px;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+#music-panel.on { display: grid; }
+.music-field { display: flex; flex-direction: column; gap: 5px; }
+.music-field.full { grid-column: 1 / -1; }
+.music-field label { font-family: var(--font-mono); font-size: 7px; font-weight: 600; letter-spacing: 0.20em; text-transform: uppercase; color: rgba(255,255,255,0.32); }
+.music-field select { width: 100%; background: rgba(0,0,0,0.26); color: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 4px; padding: 6px 7px;
+  font-family: var(--font-mono); font-size: 9px; outline: none; }
+.music-field input { width: 100%; accent-color: var(--alpen); }
+#btn-motif { grid-column: 1 / -1; }
+
+/* ══════════ CONTROL DECK ══════════ */
+#deck { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20;
+  display: flex; align-items: stretch; gap: 0;
+  background: rgba(9,9,11,0.72); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border); border-radius: var(--r-panel);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.45); padding: 10px 8px 9px; transition: opacity 0.6s ease; }
+.deck-sec { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0 14px; border-right: 1px solid rgba(255,255,255,0.06); }
+.deck-sec:last-child { border-right: none; }
+.sec-label { font-family: var(--font-mono); font-size: 7px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(255,255,255,0.26); margin-bottom: 7px; }
+.sec-row { display: flex; gap: 14px; align-items: flex-start; }
+
+.knob { display: flex; flex-direction: column; align-items: center; width: 52px; cursor: ns-resize; touch-action: none; }
+.knob svg { width: 44px; height: 44px; display: block; }
+.knob .k-val { font-family: var(--font-mono); font-size: 8px; color: rgba(255,255,255,0.62); margin-top: 1px; letter-spacing: 0.04em; }
+.knob .k-lbl { font-family: var(--font-mono); font-size: 7px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255,255,255,0.34); margin-top: 2px; text-align: center; }
+.knob:hover .k-lbl { color: rgba(255,255,255,0.6); }
+
+#time-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 168px; }
+#time-track { position: relative; width: 160px; height: 10px; border-radius: 5px; cursor: ew-resize; touch-action: none;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(90deg,
+    #070b1c 0%, #101a38 16%, #b95d43 25%, #b7cfe0 34%, #cfe3f2 50%,
+    #e8cf9a 66%, #e07a4a 79%, #33224a 88%, #070b1c 100%); }
+#time-thumb { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--alpen); border: 2px solid rgba(0,0,0,0.55); box-shadow: 0 0 10px rgba(255,157,138,0.7);
+  transform: translate(-50%, -50%); pointer-events: none; }
+#time-lbl { font-family: var(--font-mono); font-size: 7px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.34); }
+#time-lbl b { color: rgba(255,255,255,0.7); font-weight: 500; }
+
+#water-wrap { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; width: 160px; }
+#water-wrap label { font-family: var(--font-mono); font-size: 7px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.34); }
+#water-preset { width: 100%; background: rgba(0,0,0,0.26); color: rgba(255,255,255,0.78);
+  border: 1px solid rgba(255,255,255,0.13); border-radius: 4px; padding: 5px 7px;
+  font-family: var(--font-mono); font-size: 9px; outline: none; text-transform: uppercase; letter-spacing: 0.1em; }
+
+/* underwater settings panel */
+#uw-panel { position: fixed; right: 20px; top: 132px; z-index: 11; width: 214px;
+  background: rgba(6,10,18,0.72); backdrop-filter: blur(14px); border: 1px solid var(--border);
+  border-radius: var(--r-panel); padding: 13px 14px; display: none; }
+#uw-panel.show { display: block; }
+.uw-title { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.2em;
+  color: var(--alpen); margin-bottom: 10px; }
+.uw-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.uw-row label { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.5); white-space: nowrap; }
+.uw-row input[type=range] { flex: 1; accent-color: var(--alpen); height: 3px; }
+.uw-row input[type=color] { width: 30px; height: 20px; border: 1px solid var(--border); border-radius: 4px;
+  background: none; cursor: pointer; padding: 0; }
+.uw-note { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.08em; color: rgba(255,255,255,0.28);
+  margin-top: 4px; }
+
+.deck-btns { display: grid; grid-template-columns: repeat(2, minmax(58px, 1fr)); gap: 6px; align-content: start; width: 132px; }
+.btn-ghost { font-family: var(--font-display); font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  background: transparent; color: var(--fg-muted); border: 1px solid rgba(255,255,255,0.12); border-radius: var(--r-sharp);
+  min-height: 27px; padding: 6px 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; text-align: center; }
+.btn-ghost:hover { color: var(--fg); border-color: rgba(255,255,255,0.4); }
+
+/* ══════════ START OVERLAY ══════════ */
+/* Opaque splash by default so the pre-render black canvas is never visible
+   (WebGPU takes ~1–2 s to compile; v3's WebGL2 is instant). Once the first
+   frame has actually rendered we add .ready, which fades the background to
+   translucent — revealing the live scene behind the card, like v3. */
+/* The splash paints a designed DAWN-SKY gradient (never near-black) so the
+   WebGPU compile wait reads as an atmospheric poster, not a broken black
+   screen. Once the first frame renders we add .ready → the background fades to
+   translucent, revealing the live scene behind the card (v3 feel). */
+/* Clean dark splash + a loading bar while WebGPU compiles. The moment the
+   first frame renders we add .ready → the backdrop fades to translucent
+   (environment fades in behind the card) and the bar fades out. */
+#start { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 38%, #11141d 0%, #05060a 82%);
+  transition: opacity 1.6s ease, background 1.8s ease; }
+#start.ready { background: radial-gradient(ellipse at 50% 30%, rgba(10,12,20,0.18), rgba(4,5,8,0.55) 75%);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+#start.ready .load-bar { opacity: 0; }
+#start.gone { opacity: 0; pointer-events: none; }
+.load-bar { width: 190px; height: 2px; margin-top: 14px; border-radius: 2px; overflow: hidden;
+  background: rgba(255,255,255,0.11); transition: opacity 0.7s ease; }
+.load-fill { width: 0%; height: 100%; border-radius: 2px; background: var(--alpen);
+  box-shadow: 0 0 8px rgba(255,157,138,0.6);
+  /* long gentle glide between the discrete load milestones — the bar creeps
+     smoothly left→right instead of snapping between jumps */
+  transition: width 2.2s cubic-bezier(0.22, 0.6, 0.36, 1); }
+.start-card { display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; padding: 40px; }
+.start-card svg.zmark { width: 54px; height: 54px; color: #fff; filter: drop-shadow(0 8px 30px rgba(0,0,0,0.5)); }
+.start-eyebrow { font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.38); }
+.start-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(44px, 8vw, 86px); letter-spacing: 0.06em;
+  color: #fff; line-height: 0.95; text-shadow: 0 12px 60px rgba(0,0,0,0.5); }
+.start-tag { font-size: 14px; font-style: italic; color: rgba(255,255,255,0.55); font-weight: 300; letter-spacing: 0.02em; }
+.btn-primary { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  background: #fff; color: #000; border: none; border-radius: var(--r-sharp); padding: 15px 42px; cursor: pointer; margin-top: 8px;
+  transition: all 0.25s; }
+.btn-primary:hover { background: var(--alpen); box-shadow: 0 0 40px rgba(255,157,138,0.35); }
+.start-keys { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.26); margin-top: 6px; line-height: 2; }
+
+#zen-exit { position: fixed; bottom: 16px; right: 16px; z-index: 50; width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.25); color: rgba(255,255,255,0.35);
+  font-size: 11px; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.6s; backdrop-filter: blur(6px); }
+body.zen #zen-exit { opacity: 0.6; pointer-events: auto; }
+#zen-exit:hover { opacity: 1 !important; }
+
+#err { position: fixed; inset: 0; z-index: 120; display: none; background: #05060a;
+  align-items: center; justify-content: center; text-align: center; font-family: var(--font-mono);
+  font-size: 12px; letter-spacing: 0.1em; line-height: 2.2; color: var(--fg); padding: 40px; }
+
+@media (max-width: 1100px) { #deck { transform: translateX(-50%) scale(0.82); transform-origin: bottom center; } }
+@media (max-width: 900px)  { #deck { bottom: 10px; transform: translateX(-50%) scale(0.66); } }
+@media (max-width: 640px)  { #deck { bottom: 8px; transform: translateX(-50%) scale(0.46); }
+  #hint { bottom: 108px; max-width: calc(100vw - 24px); overflow: hidden; text-overflow: ellipsis; } }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.webgpu.min.js",
+    "three/webgpu": "./vendor/three/three.webgpu.min.js",
+    "three/tsl": "./vendor/three/three.tsl.min.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════ NAV ══ -->
-<nav class="nav" role="navigation" aria-label="Main navigation">
-  <div class="nav-inner">
-    <a href="/" class="nav-logo" aria-label="Zylo Home">
-      <img src="images/final_zylo_logo.svg" alt="Zylo" width="80" />
-    </a>
+<div id="vignette"></div>
+<!-- v4 thrust vignette: warm glow rising from screen-bottom while ⌘-thrusting -->
+<div id="thrust-glow" style="position:fixed; inset:0; pointer-events:none; z-index:3; opacity:0;
+  background:radial-gradient(ellipse 120% 70% at 50% 118%, rgba(255,206,140,0.55), rgba(255,150,90,0.12) 42%, transparent 66%);
+  transition:opacity 0.12s linear;"></div>
+<!-- v4 warp grade: cool edge tint + slight pull-in while the drive is pushing -->
+<div id="warp-grade" style="position:fixed; inset:0; pointer-events:none; z-index:3; opacity:0;
+  background:radial-gradient(ellipse 90% 90% at 50% 50%, transparent 34%, rgba(120,150,255,0.16) 78%, rgba(70,95,200,0.34) 100%);
+  transition:opacity 0.2s linear;"></div>
+<!-- black bridge for the atmosphere⇄space scene handoff -->
+<div id="space-fade" style="position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:5;"></div>
 
-    <ul class="nav-links" role="list">
-      <li class="nav-dropdown">
-        <span class="nav-dropdown-toggle">Synths</span>
-        <ul class="nav-dropdown-menu">
-          <li><a href="product-medrone.html">Medrone</a></li>
-          <li><a href="product-orbitweave.html">Orbit Weave</a></li>
-        </ul>
-      </li>
-      <li class="nav-dropdown">
-        <span class="nav-dropdown-toggle">Effects</span>
-        <ul class="nav-dropdown-menu">
-          <li><a href="product-zyloverb.html">Zyloverb</a></li>
-          <li><a href="product-zylodelay.html">Zylodelay</a></li>
-        </ul>
-      </li>
-      <li><a href="alpenglow/">Alpenglow</a></li>
-      <li><a href="about.html">About</a></li>
-      <li><a href="support.html">Support</a></li>
-    </ul>
-
-    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
+<div class="hud" id="hud-brand">
+  <svg viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg"><polygon fill="currentColor" points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+  <div class="brand-stack">
+    <div class="product">Alpenglow</div>
+    <div class="maker">Zylo Instruments · 3.0 Aqua</div>
   </div>
-
-  <div class="nav-mobile" aria-label="Mobile navigation">
-    <a href="product-medrone.html">Medrone</a>
-    <a href="product-orbitweave.html">Orbit Weave</a>
-    <a href="product-zyloverb.html">Zyloverb</a>
-    <a href="product-zylodelay.html">Zylodelay</a>
-    <a href="alpenglow/">Alpenglow</a>
-    <a href="about.html">About</a>
-    <a href="support.html">Support</a>
-  </div>
-</nav>
-
-<!-- ══════════════════════════════════════════ HERO: MEDRONE ══ -->
-<section id="products" class="hero" aria-label="Featured product">
-  <div class="hero-bg" style="background-image: url('images/md.png');"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <p class="label">Featured</p>
-    <h1>Medrone</h1>
-    <p class="hero-subtitle">Sculpt the infinite hum.</p>
-    <div class="hero-actions">      <a href="product-medrone.html" class="btn-text">Learn More &rarr;</a>
-    </div>
-  </div>
-</section>
-
-<div id="about" class="tagline-bar">Software instruments for motion, texture, and atmosphere.</div>
-
-<!-- ══════════════════════════════════════ HERO: ORBIT WEAVE ══ -->
-<section class="hero" aria-label="Featured product">
-  <div class="hero-bg" style="background-image: url('images/orbitweave_bg.png');"></div>
-  <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <p class="label">Synthesizer</p>
-    <h1>Orbit Weave</h1>
-    <p class="hero-subtitle">Sound in perpetual motion.</p>
-    <div class="hero-actions">      <a href="product-orbitweave.html" class="btn-text">Learn More &rarr;</a>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════ HERO ROW: ZYLO EFFECTS ══ -->
-<div class="hero-row">
-
-  <section class="hero hero-half" aria-label="Zylodelay">
-    <div class="hero-bg" style="background-image: url('images/zylodelay_bg.png');"></div>
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <p class="label">Effect</p>
-      <h2>Zylodelay</h2>
-      <p class="hero-subtitle">Time as texture.</p>
-      <div class="hero-actions">        <a href="product-zylodelay.html" class="btn-text">Learn More &rarr;</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="hero hero-half" aria-label="Zyloverb">
-    <div class="hero-bg" style="background-image: url('images/v2.png');"></div>
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <p class="label">Effect</p>
-      <h2>Zyloverb</h2>
-      <p class="hero-subtitle">Dissolve into the room.</p>
-      <div class="hero-actions">        <a href="product-zyloverb.html" class="btn-text">Learn More &rarr;</a>
-      </div>
-    </div>
-  </section>
-
 </div>
 
-<!-- ═══════════════════════════════ GENERATIVE EXPERIENCE ══ -->
-<section class="alpenglow-feature section" aria-labelledby="alpenglow-heading">
-  <div class="container alpenglow-feature-inner">
-    <div class="alpenglow-feature-copy">
-      <p class="label">Generative Experience</p>
-      <h2 id="alpenglow-heading">Alpenglow</h2>
-      <p>Drift through a living audiovisual world built from motion, atmosphere, and generative sound. A fullscreen Zylo sketch for slow exploration and ambient focus.</p>
-    </div>
-    <a href="alpenglow/" class="btn btn-outline">Launch Simulation</a>
-  </div>
-</section>
+<div class="hud" id="hud-flight">
+  <div class="readout"><span class="lbl">MODE</span><b id="ro-mode">SURFACE</b></div>
+  <div class="readout"><span class="lbl">ALT</span><b id="ro-alt">0000 M</b></div>
+  <div class="readout"><span class="lbl">HDG</span><b id="ro-hdg">000° N</b></div>
+  <div class="readout"><span class="lbl">SPD</span><b id="ro-spd">00 M/S</b></div>
+</div>
 
-<!-- ═══════════════════════════════════════ NEWSLETTER ══ -->
-<section class="newsletter section" aria-labelledby="newsletter-heading">
-  <div class="container">
-    <h2 id="newsletter-heading">Be the first to know.</h2>
-    <p>New plugins, exclusive offers, and ambient dispatches &mdash; straight to your inbox.</p>
-    <form class="newsletter-form" action="https://assets.mailerlite.com/jsonp/2403966/forms/189290985762588144/subscribe" method="POST" aria-label="Email sign-up">
-      <input type="email" name="fields[email]" placeholder="Email address" aria-label="Email address" autocomplete="email" required />
-      <input type="hidden" name="fields[source]" value="Zylo newsletter signup" />
-      <input type="hidden" name="ml-submit" value="1" />
-      <input type="hidden" name="anticsrf" value="true" />
-      <button type="submit" class="btn btn-outline">Sign Up</button>
-      <p class="newsletter-form-status" role="status" aria-live="polite"></p>
-    </form>
-  </div>
-</section>
+<div class="hud" id="hud-nav">
+  <div class="nav-head">Nav</div>
+  <div id="nav-rows"></div>
+</div>
 
-<!-- ═══════════════════════════════════════════ FOOTER ══ -->
-<footer class="footer" role="contentinfo">
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <img src="images/final_zylo_logo.svg" alt="Zylo" width="120" />
-        <p>Professional-grade synthesis and effects plugins for producers and sound designers who demand depth.</p>
+<div class="hud" id="hud-right">
+  <div id="clock">17:12</div>
+  <div id="chord">—</div>
+  <div class="chips">
+    <div class="chip on" id="chip-auto">Autopilot</div>
+    <div class="chip on" id="chip-cycle">Cycle</div>
+    <div class="chip" id="chip-music">Music</div>
+    <div class="chip" id="chip-uw">Underwater</div>
+    <div class="chip" id="chip-zen">Zen</div>
+  </div>
+</div>
+
+<!-- underwater look settings — toggled by the Underwater chip -->
+<div class="hud" id="uw-panel">
+  <div class="uw-title">UNDERWATER</div>
+  <div class="uw-row"><label>Brightness</label><input type="range" id="uw-bright" min="0.3" max="2" step="0.01" value="1"></div>
+  <div class="uw-row"><label>Caustics</label><input type="range" id="uw-caust" min="0" max="2.5" step="0.02" value="1"></div>
+  <div class="uw-row"><label>Caustic Scale</label><input type="range" id="uw-cscale" min="40" max="320" step="2" value="150"></div>
+  <div class="uw-row"><label>Sun Shafts</label><input type="range" id="uw-shaft" min="0" max="1" step="0.01" value="0.2"></div>
+  <div class="uw-row"><label>Wobble</label><input type="range" id="uw-wobble" min="0" max="0.06" step="0.001" value="0.018"></div>
+  <div class="uw-row"><label>Murk</label><input type="range" id="uw-murk" min="0" max="2" step="0.02" value="1"></div>
+  <div class="uw-row"><label>Tint</label><input type="color" id="uw-tint" value="#cfeeff"></div>
+  <div class="uw-note">applies while submerged · v-dive to test</div>
+</div>
+
+<div id="toast"></div>
+<div id="music-panel">
+  <div class="music-field">
+    <label for="music-key">Key</label>
+    <select id="music-key"></select>
+  </div>
+  <div class="music-field">
+    <label for="music-scale">Scale</label>
+    <select id="music-scale"></select>
+  </div>
+  <div class="music-field">
+    <label for="musicDensity">Density</label>
+    <input id="musicDensity" data-music-param="density" type="range" min="0" max="1" step="0.01">
+  </div>
+  <div class="music-field">
+    <label for="musicMelody">Melody</label>
+    <input id="musicMelody" data-music-param="melody" type="range" min="0" max="1" step="0.01">
+  </div>
+  <div class="music-field">
+    <label for="musicTone">Tone</label>
+    <input id="musicTone" data-music-param="tone" type="range" min="0" max="1" step="0.01">
+  </div>
+  <div class="music-field">
+    <label for="musicLevel">Level</label>
+    <input id="musicLevel" data-music-param="level" type="range" min="0" max="1" step="0.01">
+  </div>
+  <div class="music-field full">
+    <button class="btn-ghost" id="btn-motif">Generate Phrase</button>
+  </div>
+</div>
+<div id="hint">E enters selected world · R warps · L launches · V dives · space lifts · ⌘ thrusts</div>
+
+<div id="deck">
+  <div class="deck-sec">
+    <div class="sec-label">Flight</div>
+    <div class="sec-row" id="sec-flight"></div>
+  </div>
+  <div class="deck-sec">
+    <div class="sec-label">Atmosphere</div>
+    <div class="sec-row" style="align-items:center;">
+      <div id="time-wrap">
+        <div id="time-track"><div id="time-thumb"></div></div>
+        <div id="time-lbl">TIME · <b id="time-val">17:12</b></div>
+        <div id="water-wrap">
+          <label for="water-preset">Water</label>
+          <select id="water-preset"></select>
+        </div>
       </div>
-      <div class="footer-col">
-        <h4>Products</h4>
-        <ul>
-          <li><a href="product-medrone.html">Medrone</a></li>
-          <li><a href="product-orbitweave.html">Orbit Weave</a></li>
-          <li><a href="product-zyloverb.html">Zyloverb</a></li>
-          <li><a href="product-zylodelay.html">Zylodelay</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Company</h4>
-        <ul>
-          <li><a href="support.html">Support</a></li>
-          <li><a href="about.html">About</a></li>
-          <li><a href="support.html#faq">FAQ</a></li>
-          <li><a href="support.html#contact">Contact</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Legal</h4>
-        <ul>
-          <li><a href="privacy-policy.html">Privacy Policy</a></li>
-          <li><a href="terms-of-use.html">Terms of Use</a></li>
-          <li><a href="refund-policy.html">Refund Policy</a></li>
-          <li><a href="eula.html">EULA</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; 2026 Zylo Instruments. All rights reserved.</p>
-      <a class="footer-email" href="mailto:hello@zyloinstruments.com">hello@zyloinstruments.com</a>
-      <div class="footer-social">
-        <a href="https://www.instagram.com/zyloinstruments" target="_blank" rel="noopener" aria-label="Instagram">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-        </a>
-        <a href="https://www.youtube.com/@ZyloInstruments" target="_blank" rel="noopener" aria-label="YouTube">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-        </a>
-      </div>
+      <div id="sec-atmos" style="display:flex; gap:14px;"></div>
     </div>
   </div>
-</footer>
+  <div class="deck-sec">
+    <div class="sec-label">Engine</div>
+    <div class="sec-row" id="sec-engine"></div>
+  </div>
+  <div class="deck-sec">
+    <div class="sec-label">Space</div>
+    <div class="sec-row" id="sec-space"></div>
+  </div>
+  <div class="deck-sec">
+    <div class="sec-label">World</div>
+    <div class="deck-btns">
+      <button class="btn-ghost" id="btn-seed">Range</button>
+      <button class="btn-ghost" id="btn-launch">Launch</button>
+      <button class="btn-ghost" id="btn-dive">Dive</button>
+      <button class="btn-ghost" id="btn-still">Hold</button>
+    </div>
+  </div>
+</div>
 
-<script src="js/main.js"></script>
+<button id="zen-exit" title="exit zen">◍</button>
+
+<div id="start">
+  <div class="start-card">
+    <svg class="zmark" viewBox="0 0 140.15 140.76" xmlns="http://www.w3.org/2000/svg"><polygon fill="currentColor" points="137.08 111.26 137.19 140.76 2.05 140.75 61.61 80.9 18.15 80.67 40.71 57.67 67.91 30.08 0 29.94 .03 0 140.15 .02 105.9 35.31 83.72 58.43 128.52 58.57 120.56 66.45 75.6 111.19 137.08 111.26"/></svg>
+    <div class="start-eyebrow">Zylo Instruments — Generative Flight Ambient · 3.0 Aqua</div>
+    <div class="start-name">ALPENGLOW</div>
+    <div class="start-tag">"The horizon, sustained."</div>
+    <button class="btn-primary" id="btn-begin">Begin Flight</button>
+    <div class="load-bar"><div class="load-fill" id="load-fill"></div></div>
+    <div class="start-keys">drag to steer · space lifts · command thrusts forward · L launches now<br>V finds a deep-water entry · R warps in space · WebGPU (Chrome 113+)</div>
+  </div>
+</div>
+<div id="err"><div>ALPENGLOW 3.0 needs WebGPU.<br>Please use Chrome 113+ / Edge 113+ (or Safari 18).<br><br>The previous build remains available as <b>v2.html</b>.</div></div>
+
+<script>
+  // Keep the intro usable even if the WebGPU module hits a startup error.
+  document.getElementById('btn-begin')?.addEventListener('click', () => {
+    document.getElementById('start')?.classList.add('gone');
+  });
+</script>
+<script>
+  window.__err = [];
+  window.addEventListener('error', e => { window.__err.push(String(e.message || e.error)); });
+  window.addEventListener('unhandledrejection', e => { window.__err.push('REJECT: ' + String(e.reason && (e.reason.stack || e.reason.message || e.reason))); });
+</script>
+<script>
+// dev-only: ?shim keeps the sim running in a hidden tab (rAF -> setTimeout),
+// used by headless verification. No effect without the query flag.
+if (new URLSearchParams(location.search).has("shim"))
+  window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 33);
+</script>
+<script type="module" src="./src/main.js?v=20260707h"></script>
 </body>
 </html>
